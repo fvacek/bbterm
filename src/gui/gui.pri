@@ -1,0 +1,1 @@
+include(qt/qt.pri)
