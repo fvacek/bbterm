@@ -1,4 +1,5 @@
 HEADERS += \
-    src/core/util/ringbuffer.h
+	$$PWD/log.h \
+	$$PWD/ringbuffer.h \
 
 SOURCES +=

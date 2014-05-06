@@ -2,10 +2,8 @@
 
 #include <core/term/slaveptyprocess.h>
 
-#include <QDebug>
-
-#define DBG() qDebug() << __FILE__ << __LINE__
-//#define DBG() while(false) qDebug()
+//#define NO_BBTERM_LOG_DEBUG
+#include <core/util/log.h>
 
 using namespace core::term;
 
@@ -49,7 +47,7 @@ void ScreenBuffer::setTerminalSize(const QSize &cols_rows)
 void ScreenBuffer::processInput(const QString &input)
 {
 	m_inputBuffer += input;
-	DBG() << m_inputBuffer;
+	LOGDEB() << "processing input:" << m_inputBuffer;
 	int consumed = 0;
 	QRect dirty_rect;
 	while(consumed < m_inputBuffer.length()) {
@@ -61,7 +59,7 @@ void ScreenBuffer::processInput(const QString &input)
 			ScreenLine &line = m_lineBuffer.at(m_lineBuffer.count() - 1);
 			ScreenCell &cell = line.cellAt(m_currentPosition.x());
 			//DBG() << c;
-			cell.setCharacter(c);
+			cell.setLetter(c);
 			cell.setColor(m_currentColor);
 			cell.setAttributes(m_currentAttributes);
 			//DBG() << line.toString();
@@ -74,7 +72,9 @@ void ScreenBuffer::processInput(const QString &input)
 				consumed += seq_len;
 			}
 			else {
-				qWarning() << __FILE__ << __LINE__ << "unrecognized escape sequence";
+				LOGWARN() << "unrecognized escape sequence:"
+				<< m_inputBuffer.mid(consumed, 1).toUtf8().toHex()
+				<< m_inputBuffer.mid(consumed);
 				consumed++;
 			}
 		}

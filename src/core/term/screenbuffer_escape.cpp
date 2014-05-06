@@ -11,7 +11,7 @@ using namespace core::term;
 struct EscCommand
 {
 	QLatin1String pattern;
-	int (ScreenBuffer::*handler)(int, const QStringList &);
+	void (ScreenBuffer::*handler)(const QStringList &);
 	bool isRegexp;
 };
 
@@ -38,7 +38,7 @@ static EscCommand esc_commands_vt100[] = {
 	{QLatin1String("\x1b[H"), &ScreenBuffer::escape_home, false},
 	{QLatin1String("\x9"), &ScreenBuffer::escape_ht, false},
 	{QLatin1String("\x1bH"), &ScreenBuffer::escape_hts, false},
-	{QLatin1String("\xa"), &ScreenBuffer::escape_ind, false},
+	//{QLatin1String("\xa"), &ScreenBuffer::escape_ind, false},
 	{QLatin1String("\x1bOq"), &ScreenBuffer::escape_ka1, false},
 	{QLatin1String("\x1bOs"), &ScreenBuffer::escape_ka3, false},
 	{QLatin1String("\x1bOr"), &ScreenBuffer::escape_kb2, false},
@@ -90,57 +90,47 @@ static EscCommand esc_commands_vt100[] = {
 static const int esc_commands_count_vt100 = sizeof(esc_commands_vt100)/sizeof(EscCommand);
 
 // graphics charset pairs, based on vt100
-int ScreenBuffer::escape_acsc(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_acsc(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // audible signal (bell)
-int ScreenBuffer::escape_bel(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_bel(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 //  if( term->bell != NULL ) term->bell(TO_H(term));
 	*/
 }
 
 // turn on blinking
-int ScreenBuffer::escape_blink(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_blink(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 //  term->cattr |= TERM_ATTRIB_BLINK;
 	*/
 }
 
 // turn on bold (extra bright) mode
-int ScreenBuffer::escape_bold(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_bold(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 //  term->cattr |= TERM_ATTRIB_BOLD;
 	*/
 }
 
 // Clear screen and home cursor
-int ScreenBuffer::escape_clear(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_clear(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	int i, j;
 	for( i = 0; i < term->grid.height; i ++ ) {
@@ -157,33 +147,28 @@ int ScreenBuffer::escape_clear(int matched_len, const QStringList &params)
 }
 
 // carriage return
-int ScreenBuffer::escape_cr(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_cr(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
-	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
+	ESC_DEBUG() << Q_FUNC_INFO;
+	m_currentPosition.setX(0);
 	/*
 //  term->ccol = 0;
 	*/
 }
 
 // Change scrolling region
-int ScreenBuffer::escape_csr(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_csr(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // Move cursor left #1 spaces
-int ScreenBuffer::escape_cub(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_cub(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	int left = atoi( term->output_bytes + 2 );
 	if( term->ccol < left ) {
@@ -196,12 +181,10 @@ int ScreenBuffer::escape_cub(int matched_len, const QStringList &params)
 }
 
 // move left one space
-int ScreenBuffer::escape_cub1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_cub1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	if( term->ccol > 0 ) {
 		term->ccol --;
@@ -211,12 +194,10 @@ int ScreenBuffer::escape_cub1(int matched_len, const QStringList &params)
 }
 
 // Move down #1 lines
-int ScreenBuffer::escape_cud(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_cud(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	int down = atoi( term->output_bytes + 2 );
 	if( term->crow + down >= term->grid.height ) {
@@ -229,29 +210,18 @@ int ScreenBuffer::escape_cud(int matched_len, const QStringList &params)
 }
 
 // down one line
-int ScreenBuffer::escape_cud1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_cud1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
-	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
-	/*
-	term->crow++;
-	term->dirty_cursor.exists = true;
-	if( term->crow >= term->grid.height ) {
-		term_shiftrows_up(term);
-		term_add_dirty_rect( term, 0, 0, term->grid.width, term->grid.height );
-	}
-	*/
+	ESC_DEBUG() << Q_FUNC_INFO;
+	appendNewLine();
 }
 
 // Move right #1 spaces
-int ScreenBuffer::escape_cuf(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_cuf(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	int right = atoi( term->output_bytes + 2 );
 	if( term->ccol + right >= term->grid.width ) {
@@ -264,12 +234,10 @@ int ScreenBuffer::escape_cuf(int matched_len, const QStringList &params)
 }
 
 // move right one space
-int ScreenBuffer::escape_cuf1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_cuf1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	if( term->ccol + 1 >= term->grid.width ) {
 		term->ccol = term->grid.width - 1;
@@ -281,12 +249,10 @@ int ScreenBuffer::escape_cuf1(int matched_len, const QStringList &params)
 }
 
 // Move to row #1 col #2
-int ScreenBuffer::escape_cup(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_cup(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	char *n;
 	term->crow = strtoul( term->output_bytes + 2, &n, 10 ) - 1;
@@ -299,12 +265,10 @@ int ScreenBuffer::escape_cup(int matched_len, const QStringList &params)
 }
 
 // Move cursor up #1 lines
-int ScreenBuffer::escape_cuu(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_cuu(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	int up = atoi( term->output_bytes + 2 );
 	if( term->crow - up < 0 ) {
@@ -317,12 +281,10 @@ int ScreenBuffer::escape_cuu(int matched_len, const QStringList &params)
 }
 
 // up one line
-int ScreenBuffer::escape_cuu1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_cuu1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	if( term->crow > 0 ) {
 		term->crow --;
@@ -332,12 +294,10 @@ int ScreenBuffer::escape_cuu1(int matched_len, const QStringList &params)
 }
 
 // Clear to end of display
-int ScreenBuffer::escape_ed(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_ed(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	int i, j;
 	for( i = term->crow; i < term->grid.height; i ++ ) {
@@ -351,12 +311,10 @@ int ScreenBuffer::escape_ed(int matched_len, const QStringList &params)
 }
 
 // Clear to end of line
-int ScreenBuffer::escape_el(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_el(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	int i;
 	for( i = term->ccol; i < term->grid.width; i ++ ) {
@@ -367,12 +325,10 @@ int ScreenBuffer::escape_el(int matched_len, const QStringList &params)
 }
 
 // Clear to beginning of line
-int ScreenBuffer::escape_el1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_el1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	int i;
 	for( i = term->ccol; i >= 0; i -- ) {
@@ -383,21 +339,17 @@ int ScreenBuffer::escape_el1(int matched_len, const QStringList &params)
 }
 
 // enable alternate char set
-int ScreenBuffer::escape_enacs(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_enacs(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // Home cursor
-int ScreenBuffer::escape_home(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_home(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	term->crow = 0;
 	term->ccol = 0;
@@ -406,354 +358,292 @@ int ScreenBuffer::escape_home(int matched_len, const QStringList &params)
 }
 
 // turn on blank mode (characters invisible)
-int ScreenBuffer::escape_invis(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_invis(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // tab to next 8-space hardware tab stop
-int ScreenBuffer::escape_ht(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_ht(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
-	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
+	static const int tab_width = 8;
+	int x = m_currentPosition.x();
+	x = (x / tab_width + 1) * tab_width;
+	m_currentPosition.setX(x);
+	if(m_currentPosition.x() >= m_terminalSize.width()) {
+		appendNewLine();
+	}
 }
 
 // set a tab in every row, current columns
-int ScreenBuffer::escape_hts(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_hts(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // scroll text up
-int ScreenBuffer::escape_ind(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_ind(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // upper left of keypad
-int ScreenBuffer::escape_ka1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_ka1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // upper right of keypad
-int ScreenBuffer::escape_ka3(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_ka3(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // center of keypad
-int ScreenBuffer::escape_kb2(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kb2(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // backspace key
-int ScreenBuffer::escape_kbs(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kbs(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // lower left of keypad
-int ScreenBuffer::escape_kc1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kc1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // lower right of keypad
-int ScreenBuffer::escape_kc3(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kc3(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // left-arrow key
-int ScreenBuffer::escape_kcub1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kcub1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // down-arrow key
-int ScreenBuffer::escape_kcud1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kcud1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // right-arrow key
-int ScreenBuffer::escape_kcuf1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kcuf1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // up-arrow key
-int ScreenBuffer::escape_kcuu1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kcuu1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // enter/send key
-int ScreenBuffer::escape_kent(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kent(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // F0 function key
-int ScreenBuffer::escape_kf0(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kf0(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // F1 function key
-int ScreenBuffer::escape_kf1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kf1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // F10 function key
-int ScreenBuffer::escape_kf10(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kf10(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // F2 function key
-int ScreenBuffer::escape_kf2(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kf2(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // F3 function key
-int ScreenBuffer::escape_kf3(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kf3(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // F4 function key
-int ScreenBuffer::escape_kf4(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kf4(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // F5 function key
-int ScreenBuffer::escape_kf5(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kf5(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // F6 function key
-int ScreenBuffer::escape_kf6(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kf6(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // F7 function key
-int ScreenBuffer::escape_kf7(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kf7(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // F8 function key
-int ScreenBuffer::escape_kf8(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kf8(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // F9 function key
-int ScreenBuffer::escape_kf9(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_kf9(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // label on function key f1 if not f1
-int ScreenBuffer::escape_lf1(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_lf1(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // label on function key f2 if not f2
-int ScreenBuffer::escape_lf2(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_lf2(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // label on function key f3 if not f3
-int ScreenBuffer::escape_lf3(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_lf3(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // label on function key f4 if not f4
-int ScreenBuffer::escape_lf4(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_lf4(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // print contents of screen
-int ScreenBuffer::escape_mc0(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_mc0(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // turn off printer
-int ScreenBuffer::escape_mc4(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_mc4(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // turn on printer
-int ScreenBuffer::escape_mc5(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_mc5(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
-int ScreenBuffer::escape_nel(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_nel(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	term->ccol=0;
 	term->crow++;
@@ -766,12 +656,10 @@ int ScreenBuffer::escape_nel(int matched_len, const QStringList &params)
 }
 
 // Restore cursor to position of last sc
-int ScreenBuffer::escape_rc(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_rc(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	term->crow = term->csavedrow;
 	term->ccol = term->csavedcol;
@@ -780,24 +668,20 @@ int ScreenBuffer::escape_rc(int matched_len, const QStringList &params)
 }
 
 // turn on reverse video mode
-int ScreenBuffer::escape_rev(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_rev(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	term->cattr |= TERM_ATTRIB_REVERSE;
 	*/
 }
 
 // scroll text down
-int ScreenBuffer::escape_ri(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_ri(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	term_shiftrows_down(term);
 	term_add_dirty_rect( term, 0, 0, term->grid.width, term->grid.height );
@@ -805,77 +689,63 @@ int ScreenBuffer::escape_ri(int matched_len, const QStringList &params)
 }
 
 // end alternate character set
-int ScreenBuffer::escape_rmacs(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_rmacs(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // turn off automatic margins
-int ScreenBuffer::escape_rmam(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_rmam(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // Out of "keypad-transmit" mode
-int ScreenBuffer::escape_rmkx(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_rmkx(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
 	// Do nothing here, assume always transmit since we don't have a numeric keypad on VKB
-	return matched_len;
 }
 
 // exit standout mode
-int ScreenBuffer::escape_rmso(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_rmso(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	term->cattr &= ~TERM_ATTRIB_STANDOUT;
 	*/
 }
 
 // End underscore mode
-int ScreenBuffer::escape_rmul(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_rmul(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	term->cattr &= ~TERM_ATTRIB_UNDERSCORE;
 	*/
 }
 
 // reset string
-int ScreenBuffer::escape_rs2(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_rs2(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // Save cursor position
-int ScreenBuffer::escape_sc(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_sc(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	term->csavedrow = term->crow;
 	term->csavedcol = term->ccol;
@@ -883,23 +753,19 @@ int ScreenBuffer::escape_sc(int matched_len, const QStringList &params)
 }
 
 // define video attributes #1-#9
-int ScreenBuffer::escape_sgr(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_sgr(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // Turn off all attributes
-int ScreenBuffer::escape_sgr0(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_sgr0(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	term->cattr = 0;
 	term->ccolour = 0;
@@ -907,75 +773,61 @@ int ScreenBuffer::escape_sgr0(int matched_len, const QStringList &params)
 }
 
 // start alternate character set
-int ScreenBuffer::escape_smacs(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_smacs(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // turn on automatic margins
-int ScreenBuffer::escape_smam(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_smam(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 }
 
 // Begin keypad transmit mode.
-int ScreenBuffer::escape_smkx(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_smkx(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
 	// Do nothing here, assume always transmit since we don't have a numeric keypad on VKB
-	return matched_len;
 }
 
 // begin standout mode
-int ScreenBuffer::escape_smso(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_smso(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	term->cattr |= TERM_ATTRIB_STANDOUT;
 	*/
 }
 
 // begin underline mode
-int ScreenBuffer::escape_smul(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_smul(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	term->cattr |= TERM_ATTRIB_UNDERSCORE;
 	*/
 }
 
 // clear all tab stops
-int ScreenBuffer::escape_tbc(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_tbc(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	*/
 }
 
 // vertical position #1 absolute
-int ScreenBuffer::escape_vpa(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_vpa(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	int vpos = atoi( term->output_bytes + 2 );
 	if( vpos >= term->grid.height ) {
@@ -987,12 +839,10 @@ int ScreenBuffer::escape_vpa(int matched_len, const QStringList &params)
 	*/
 }
 
-int ScreenBuffer::escape_sgm(int matched_len, const QStringList &params)
+void ScreenBuffer::escape_sgm(const QStringList &params)
 {
-	Q_UNUSED(matched_len);
 	Q_UNUSED(params);
 	ESC_DEBUG() << Q_FUNC_INFO << "NIY";
-	return matched_len;
 	/*
 	int i = 2;
 	int val;
@@ -1117,10 +967,10 @@ int ScreenBuffer::processControlSequence(int start_pos)
 	int matched_length = -1;
 	for(int i=0; i<cmdn; i++) {
 		EscCommand cmd = cmds[i];
-		QString pattern = cmd.pattern;
+		QLatin1String pattern = cmd.pattern;
 		if(cmd.isRegexp) {
 			QRegExp rx = seqRegExps.value(pattern);
-			if(!rx.isEmpty()) {
+			if(rx.isEmpty()) {
 				rx = QRegExp(pattern);
 				seqRegExps[pattern] = rx;
 			}
@@ -1135,15 +985,14 @@ int ScreenBuffer::processControlSequence(int start_pos)
 			QStringRef str_ref(&m_inputBuffer, start_pos, m_inputBuffer.length() - start_pos);
 			if(str_ref.startsWith(pattern)) {
 				cmd_index = i;
-				matched_length = pattern.length();
+				matched_length = ::strlen(pattern.latin1());
 				break;
 			}
 		}
 	}
 	if(cmd_index >= 0) {
-		(*this.*(cmds[cmd_index].handler))(matched_length, params);
+		(*this.*(cmds[cmd_index].handler))(params);
 		return matched_length;
 	}
 	return 0;
 }
-

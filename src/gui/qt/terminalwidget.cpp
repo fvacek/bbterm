@@ -6,10 +6,8 @@
 #include <QPainter>
 #include <QColor>
 
-#include <QDebug>
-
-#define DBG() qDebug() << __FILE__ << __LINE__
-//#define DBG() while(false) qDebug()
+//#define NO_BBTERM_LOG_DEBUG
+#include <core/util/log.h>
 
 using namespace gui::qt;
 
@@ -48,7 +46,7 @@ void TerminalWidget::setupFont(int point_size)
 
 void TerminalWidget::invalidateRegion(const QRect &dirty_rect)
 {
-	DBG() << Q_FUNC_INFO;
+	LOGDEB() << Q_FUNC_INFO;
 	Q_UNUSED(dirty_rect);
 	update();
 }
@@ -64,7 +62,7 @@ void TerminalWidget::setTerminal(core::term::Terminal *t)
 
 void TerminalWidget::paintEvent(QPaintEvent *ev)
 {
-	DBG() << Q_FUNC_INFO;
+	LOGDEB() << Q_FUNC_INFO;
 	Q_UNUSED(ev);
 	QPainter painter(this);
 	QColor fg_color(255,255,255);
@@ -79,15 +77,12 @@ void TerminalWidget::paintEvent(QPaintEvent *ev)
 	int row_count = screen_buffer->rowCount();
 	int start_ix = row_count - term_size.height();
 	if(start_ix < 0) start_ix = 0;
-	DBG() << start_ix << row_count;
+	LOGDEB() << start_ix << row_count;
 	for(int i=start_ix; i<row_count; i++) {
 		core::term::ScreenLine screen_line = screen_buffer->lineAt(i);
-		QString line_str;
-		foreach(const core::term::ScreenCell &c, screen_line) {
-			line_str.append(c.character());
-		}
+		QString line_str = screen_line.toString();
 		int y = (i - start_ix + 1) * m_charHeightPx;
-		DBG() << y << line_str;
+		LOGDEB() << y << line_str;
 		painter.drawText(0, y, line_str);
 	}
 }

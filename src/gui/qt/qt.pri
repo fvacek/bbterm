@@ -1,10 +1,10 @@
 SOURCES += \
     $$PWD/mainwindow.cpp \
-    src/gui/qt/terminalwidget.cpp
+	$$PWD/terminalwidget.cpp
 
 HEADERS  += \
 	$$PWD/mainwindow.h \
-    src/gui/qt/terminalwidget.h
+	$$PWD/terminalwidget.h
 
 FORMS += \
 	$$PWD/mainwindow.ui \
