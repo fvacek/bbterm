@@ -62,7 +62,7 @@ void TerminalWidget::setTerminal(core::term::Terminal *t)
 
 void TerminalWidget::paintEvent(QPaintEvent *ev)
 {
-	LOGDEB() << Q_FUNC_INFO;
+	//LOGDEB() << Q_FUNC_INFO;
 	Q_UNUSED(ev);
 	QPainter painter(this);
 	QColor fg_color(255,255,255);
@@ -73,16 +73,14 @@ void TerminalWidget::paintEvent(QPaintEvent *ev)
 	QRect r(QPoint(0, 0), geometry().size());
 	painter.fillRect(r, QBrush(bg_color));
 	core::term::ScreenBuffer *screen_buffer = m_terminal->screenBuffer();
-	QSize term_size = screen_buffer->terminalSize();
 	int row_count = screen_buffer->rowCount();
-	int start_ix = row_count - term_size.height();
-	if(start_ix < 0) start_ix = 0;
-	LOGDEB() << start_ix << row_count;
+	int start_ix = screen_buffer->firstVisibleLineIndex();
+	//LOGDEB() << start_ix << row_count;
 	for(int i=start_ix; i<row_count; i++) {
 		core::term::ScreenLine screen_line = screen_buffer->lineAt(i);
 		QString line_str = screen_line.toString();
 		int y = (i - start_ix + 1) * m_charHeightPx;
-		LOGDEB() << y << line_str;
+		//LOGDEB() << y << line_str;
 		painter.drawText(0, y, line_str);
 	}
 }

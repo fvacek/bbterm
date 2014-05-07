@@ -14,20 +14,50 @@ namespace term {
 
 class SlavePtyProcess;
 
-struct ScreenCell
+class ScreenCell
 {
 public:
-	typedef quint16 Color;
+	enum Attribute {
+		AttrReset = 0x00,
+		AttrBright = 0x01,
+		AttrDim = 0x02,
+		AttrUnderscore = 0x04,
+		AttrBlink = 0x08,
+		AttrReverse = 0x10,
+		AttrHidden = 0x20
+	};
+
+	enum Colors {
+		ColorBlack = 0,
+		ColorRed,
+		ColorGreen,
+		ColorYellow,
+		ColorBlue,
+		ColorMagenta,
+		ColorCyan,
+		ColorWhite
+	};
+public:
+	typedef quint8 Color;
 	typedef quint8 Attributes;
+	struct D {
+		quint32 letter:16;
+		quint32 fgColor:4;
+		quint32 bgColor:4;
+		quint32 attributes:8;
+	};
+
 private:
 	class Data : public QSharedData
 	{
 	public:
 		QChar letter;
-		Color color;
+		Color fgColor;
+		Color bgColor;
 		Attributes attributes;
 
-		Data(QChar ch = QChar(), quint16 c = 0, quint8 a = 0) : letter(ch), color(c), attributes(a) {}
+		Data(QChar ch = QChar(), Color fg = ColorWhite, Color bg = ColorBlack, Attributes a = AttrReset)
+		 : letter(ch), fgColor(fg), bgColor(bg), attributes(a) {}
 	};
 	QSharedDataPointer<Data> d;
 	class NullHelper {};
@@ -35,15 +65,16 @@ private:
 	static const ScreenCell& sharedNull();
 public:
 	ScreenCell();
-	ScreenCell(QChar letter, quint16 color, quint8 attributes);
+	ScreenCell(QChar letter, Color fg = ColorWhite, Color bg = ColorBlack, Attributes a = AttrReset);
 
 	bool isNull() const {
 		return d == sharedNull().d;
 	}
 	QChar letter() const {return d->letter;}
 	void setLetter(QChar c) {d->letter = c;}
-	Color color() const {return d->color;}
-	void setColor(Color c) {d->color = c;}
+	Color fgColor() const {return d->fgColor;}
+	Color bgColor() const {return d->bgColor;}
+	void setColor(Color fg, Color bg) {d->fgColor = fg; d->bgColor = bg;}
 	Attributes attributes() const {return d->attributes;}
 	void setAttributes(Attributes a) {d->attributes = a;}
 };
@@ -77,34 +108,47 @@ class ScreenBuffer : public QObject
 	Q_OBJECT
 public:
 	explicit ScreenBuffer(SlavePtyProcess *slave_pty_process, QObject *parent = 0);
-public:
-	void setTerminalSize(const QSize &cols_rows);
-	QSize terminalSize();
-	int rowCount() {return m_lineBuffer.count();}
-	ScreenLine lineAt(int ix) {
-		return m_lineBuffer.value(ix);
-	}
-	void processInput(const QString &input);
-private:
-	int processControlSequence(int start_pos);
-	void appendNewLine();
 signals:
 	void dirtyRegion(const QRect &rect);
 public:
+	void setTerminalSize(const QSize &cols_rows);
+	QSize terminalSize();
+	int rowCount() const {
+		return m_lineBuffer.count();
+	}
+	ScreenLine lineAt(int ix) {
+		return m_lineBuffer.value(ix);
+	}
+	int firstVisibleLineIndex() const;
+	void processInput(const QString &input);
+private:
+	int processControlSequence(int start_pos);
+	void appendLine(bool move_cursor);
+	QString dump() const;
+private:
+	core::util::RingBuffer<ScreenLine> m_lineBuffer;
+	QString m_inputBuffer;
+	QSize m_terminalSize; // cols, rows
+	SlavePtyProcess *m_slavePtyProcess;
+	QPoint m_currentPosition;
+	ScreenCell::Color m_currentFgColor;
+	ScreenCell::Color m_currentBgColor;
+	ScreenCell::Attributes m_currentAttributes;
+public:
 	void escape_acsc(const QStringList &params);
 	void escape_bel(const QStringList &params);
-	void escape_blink(const QStringList &params);
+	//void escape_blink(const QStringList &params);
 	void escape_bold(const QStringList &params);
 	void escape_cbt(const QStringList &params);
 	void escape_clear(const QStringList &params);
 	void escape_cr(const QStringList &params);
 	void escape_csr(const QStringList &params);
 	void escape_cub(const QStringList &params);
-	void escape_cub1(const QStringList &params);
+	//void escape_cub1(const QStringList &params);
 	void escape_cud(const QStringList &params);
-	void escape_cud1(const QStringList &params);
+	//void escape_cud1(const QStringList &params);
 	void escape_cuf(const QStringList &params);
-	void escape_cuf1(const QStringList &params);
+	//void escape_cuf1(const QStringList &params);
 	void escape_cup(const QStringList &params);
 	void escape_cuu(const QStringList &params);
 	void escape_cuu1(const QStringList &params);
@@ -171,8 +215,8 @@ public:
 	void escape_rmam(const QStringList &params);
 	void escape_rmkx(const QStringList &params);
 	void escape_rmpch(const QStringList &params);
-	void escape_rmso(const QStringList &params);
-	void escape_rmul(const QStringList &params);
+	//void escape_rmso(const QStringList &params);
+	//void escape_rmul(const QStringList &params);
 	void escape_rs2(const QStringList &params);
 	void escape_s0ds(const QStringList &params);
 	void escape_s1ds(const QStringList &params);
@@ -182,13 +226,13 @@ public:
 	void escape_setab(const QStringList &params);
 	void escape_setaf(const QStringList &params);
 	void escape_sgr(const QStringList &params);
-	void escape_sgr0(const QStringList &params);
+	//void escape_sgr0(const QStringList &params);
 	void escape_smacs(const QStringList &params);
 	void escape_smam(const QStringList &params);
 	void escape_smkx(const QStringList &params);
 	void escape_smpch(const QStringList &params);
-	void escape_smso(const QStringList &params);
-	void escape_smul(const QStringList &params);
+	//void escape_smso(const QStringList &params);
+	//void escape_smul(const QStringList &params);
 	void escape_tbc(const QStringList &params);
 	void escape_u6(const QStringList &params);
 	void escape_u7(const QStringList &params);
@@ -196,14 +240,8 @@ public:
 	void escape_u9(const QStringList &params);
 	void escape_vpa(const QStringList &params);
 	void escape_sgm(const QStringList &params);
-private:
-	core::util::RingBuffer<ScreenLine> m_lineBuffer;
-	QString m_inputBuffer;
-	QSize m_terminalSize; // cols, rows
-	SlavePtyProcess *m_slavePtyProcess;
-	QPoint m_currentPosition;
-	ScreenCell::Color m_currentColor;
-	ScreenCell::Attributes m_currentAttributes;
+
+	void escape_charAttr(const QStringList &params);
 };
 
 }
