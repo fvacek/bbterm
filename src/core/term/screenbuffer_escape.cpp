@@ -20,8 +20,11 @@ struct EscCommand
 
 static EscCommand esc_commands_vt100[] = {
 	{QLatin1String("\x7"), &ScreenBuffer::escape_bel, false},
-	{QLatin1String("^\x001b\\[([0-9]?)m"), &ScreenBuffer::escape_charAttr, true},
-//	{QLatin1String("\x1b[0m"), &ScreenBuffer::escape_sgr0, false},
+	{QLatin1String("^\x001b\\[\\?([0-9]*)h"), &ScreenBuffer::escape_ignored, true},
+	{QLatin1String("^\x001b\\[([0-9]*)m"), &ScreenBuffer::escape_charAttr, true},
+	{QLatin1String("^\x001b([\\(\\)])([012AB])"), &ScreenBuffer::escape_ignored, true},
+	{QLatin1String("\x1b="), &ScreenBuffer::escape_ignored, false},
+	{QLatin1String("\x1b>"), &ScreenBuffer::escape_ignored, false},
 //	{QLatin1String("\x1b[1m"), &ScreenBuffer::escape_bold, false},
 //	{QLatin1String("\x1b[4m"), &ScreenBuffer::escape_smul, false},
 //	{QLatin1String("\x1b[5m"), &ScreenBuffer::escape_blink, false},
@@ -35,7 +38,7 @@ static EscCommand esc_commands_vt100[] = {
 	{QLatin1String("^\x001b\\[([0-9]*)D"), &ScreenBuffer::escape_cub, true},
 	//{QLatin1String("\x8"), &ScreenBuffer::escape_cub1, false},
 	{QLatin1String("^\x001b\\[([0-9]*)B"), &ScreenBuffer::escape_cud, true},
-	//{QLatin1String("\xa"), &ScreenBuffer::escape_cud1, false},
+	{QLatin1String("\xa"), &ScreenBuffer::escape_cud, false},
 	{QLatin1String("^\x001b\\[([0-9]*)C"), &ScreenBuffer::escape_cuf, true},
 	//{QLatin1String("\x1b[C"), &ScreenBuffer::escape_cuf1, false},
 	{QLatin1String("^\x001b\\[([0-9]+);([0-9]+)H"), &ScreenBuffer::escape_cup, true},
@@ -145,9 +148,9 @@ void ScreenBuffer::escape_cr(const QStringList &params)
 void ScreenBuffer::escape_csr(const QStringList &params)
 {
 	Q_UNUSED(params);
-	int n1 = params.value(0).toInt();
-	int n2 = params.value(1).toInt();
-	ESC_DEBUG() << "Enable scrolling from row:" << n1 << "to row:" << n2 << "NIY";
+	int n1 = params.value(1).toInt();
+	int n2 = params.value(2).toInt();
+	ESC_DEBUG() << "Enable scrolling from row:" << n1 << "to row:" << n2 << "IGNORED";
 }
 
 // Move cursor left #1 spaces
@@ -170,7 +173,7 @@ void ScreenBuffer::escape_cub(const QStringList &params)
 void ScreenBuffer::escape_cud(const QStringList &params)
 {
 	bool ok;
-	int n = params.value(0).toInt(&ok);
+	int n = params.value(1).toInt(&ok);
 	if(!ok)
 		n = 1;
 	ESC_DEBUG() << n << "lines feed";
@@ -183,7 +186,7 @@ void ScreenBuffer::escape_cud(const QStringList &params)
 void ScreenBuffer::escape_cuf(const QStringList &params)
 {
 	Q_UNUSED(params);
-	int n = params.value(0).toInt();
+	int n = params.value(1).toInt();
 	ESC_DEBUG() << "n:" << n;
 	int x = m_currentPosition.x() + n;
 	if(x >= m_terminalSize.width()) {
@@ -196,8 +199,8 @@ void ScreenBuffer::escape_cuf(const QStringList &params)
 void ScreenBuffer::escape_cup(const QStringList &params)
 {
 	Q_UNUSED(params);
-	int row = params.value(0).toInt() - 1;
-	int col = params.value(1).toInt() - 1;
+	int row = params.value(1).toInt() - 1;
+	int col = params.value(2).toInt() - 1;
 	ESC_DEBUG() << "row:" << row << "col:" << col;
 	if(row >= 0 && row < m_terminalSize.height()) {
 		if(col >= 0 && col < m_terminalSize.width()) {
@@ -297,7 +300,7 @@ void ScreenBuffer::escape_el1(const QStringList &params)
 void ScreenBuffer::escape_enacs(const QStringList &params)
 {
 	Q_UNUSED(params);
-	ESC_DEBUG() << "enable alternate char set NIY";
+	ESC_DEBUG() << "enable alternate char set IGNORED";
 }
 
 // Home cursor
@@ -642,7 +645,7 @@ void ScreenBuffer::escape_ri(const QStringList &params)
 void ScreenBuffer::escape_rmacs(const QStringList &params)
 {
 	Q_UNUSED(params);
-	ESC_DEBUG() << "end alternate character set NIY";
+	ESC_DEBUG() << "end alternate character set IGNORED";
 }
 
 // turn off automatic margins
@@ -707,7 +710,7 @@ void ScreenBuffer::escape_smam(const QStringList &params)
 void ScreenBuffer::escape_smkx(const QStringList &params)
 {
 	Q_UNUSED(params);
-	ESC_DEBUG_NIY();
+	ESC_DEBUG() << "Begin keypad transmit mode" << "IGNORED";
 	// Do nothing here, assume always transmit since we don't have a numeric keypad on VKB
 }
 
@@ -855,7 +858,7 @@ void ScreenBuffer::escape_sgm(const QStringList &params)
 
 void ScreenBuffer::escape_charAttr(const QStringList &params)
 {
-	int n = params.value(0).toInt();
+	int n = params.value(1).toInt();
 	ESC_DEBUG() << n;
 	switch(n) {
 	case 0:
@@ -880,9 +883,32 @@ void ScreenBuffer::escape_charAttr(const QStringList &params)
 		m_currentAttributes |= ScreenCell::AttrHidden;
 		break;
 	default:
-		LOGWARN() << "invalid character attribute value:" << n;
+		if(n >= 30 && n <= 39) {
+			n -= 30;
+			if(n > 7) {
+				// set default fg
+				n = ScreenCell::ColorWhite;
+			}
+			m_currentFgColor = n;
+		}
+		else if(n >= 40 && n <= 49) {
+			n -= 40;
+			if(n > 7) {
+				// set default bg
+				n = ScreenCell::ColorBlack;
+			}
+			m_currentBgColor = n;
+		}
+		else {
+			LOGWARN() << "invalid character attribute value:" << n;
+		}
 	}
- }
+}
+
+void ScreenBuffer::escape_ignored(const QStringList &params)
+{
+	ESC_DEBUG() << params.join(",") << "IGNORED";
+}
 
 static QMap<QString, QRegExp> seqRegExps;
 
@@ -904,7 +930,7 @@ int ScreenBuffer::processControlSequence(int start_pos)
 			}
 			if(rx.indexIn(m_inputBuffer, start_pos, QRegExp::CaretAtOffset) == start_pos) {
 				cmd_index = i;
-				params = rx.capturedTexts().mid(1);
+				params = rx.capturedTexts();
 				matched_length = rx.matchedLength();
 				break;
 			}
@@ -913,12 +939,17 @@ int ScreenBuffer::processControlSequence(int start_pos)
 			QStringRef str_ref(&m_inputBuffer, start_pos, m_inputBuffer.length() - start_pos);
 			if(str_ref.startsWith(pattern)) {
 				cmd_index = i;
-				matched_length = ::strlen(pattern.latin1());
+				QString param = m_inputBuffer.mid(start_pos, ::strlen(pattern.latin1()));
+				matched_length = param.length();
+				params << param;
 				break;
 			}
 		}
 	}
 	if(cmd_index >= 0) {
+		if(matched_length > 50) {
+			LOGWARN() << "################" << params.value(0);
+		}
 		(*this.*(cmds[cmd_index].handler))(params);
 		return matched_length;
 	}

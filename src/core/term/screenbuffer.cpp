@@ -9,29 +9,6 @@
 
 using namespace core::term;
 
-const ScreenCell & ScreenCell::sharedNull()
-{
-	static ScreenCell n = ScreenCell(NullHelper());
-	return n;
-}
-
-ScreenCell::ScreenCell(ScreenCell::NullHelper)
-{
-	d = new Data();
-}
-
-ScreenCell::ScreenCell()
-{
-LOGDEB() << "*************" << sizeof(D);
-qFatal("************");
-	*this = sharedNull();
-}
-
-ScreenCell::ScreenCell(QChar letter, Color fg, Color bg, Attributes attributes)
-{
-	d = new Data(letter, fg, bg, attributes);
-}
-
 ScreenBuffer::ScreenBuffer(SlavePtyProcess *slave_pty_process, QObject *parent)
 : QObject(parent), m_slavePtyProcess(slave_pty_process)
 {
@@ -89,12 +66,13 @@ void ScreenBuffer::processInput(const QString &input)
 		else {
 			int seq_len = processControlSequence(consumed);
 			if(seq_len > 0) {
+				//LOGDEB() << "SEQ LEN:" << seq_len;
 				consumed += seq_len;
 			}
 			else {
 				LOGWARN() << "unrecognized escape sequence:"
 				<< m_inputBuffer.mid(consumed, 1).toUtf8().toHex()
-				<< m_inputBuffer.mid(consumed);
+				<< m_inputBuffer.mid(consumed, 10);
 				consumed++;
 			}
 		}
@@ -104,7 +82,7 @@ void ScreenBuffer::processInput(const QString &input)
 		// TODO: implement dirty rect
 		emit dirtyRegion(dirty_rect);
 	}
-	LOGDEB() << "dump\n" << dump();
+	//LOGDEB() << "dump\n" << dump();
 }
 
 void ScreenBuffer::appendLine(bool move_cursor)

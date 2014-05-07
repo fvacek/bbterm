@@ -37,46 +37,28 @@ public:
 		ColorCyan,
 		ColorWhite
 	};
-public:
+
 	typedef quint8 Color;
 	typedef quint8 Attributes;
-	struct D {
-		quint32 letter:16;
-		quint32 fgColor:4;
-		quint32 bgColor:4;
-		quint32 attributes:8;
-	};
-
-private:
-	class Data : public QSharedData
-	{
-	public:
-		QChar letter;
-		Color fgColor;
-		Color bgColor;
-		Attributes attributes;
-
-		Data(QChar ch = QChar(), Color fg = ColorWhite, Color bg = ColorBlack, Attributes a = AttrReset)
-		 : letter(ch), fgColor(fg), bgColor(bg), attributes(a) {}
-	};
-	QSharedDataPointer<Data> d;
-	class NullHelper {};
-	ScreenCell(NullHelper);
-	static const ScreenCell& sharedNull();
 public:
-	ScreenCell();
-	ScreenCell(QChar letter, Color fg = ColorWhite, Color bg = ColorBlack, Attributes a = AttrReset);
+	ScreenCell(QChar letter = '\x0', Color fg = ColorWhite, Color bg = ColorBlack, Attributes a = AttrReset)
+	: m_unicode(letter.unicode()), m_fgColor(fg), m_bgColor(bg), m_attributes(a) {}
 
 	bool isNull() const {
-		return d == sharedNull().d;
+		return m_unicode == 0;
 	}
-	QChar letter() const {return d->letter;}
-	void setLetter(QChar c) {d->letter = c;}
-	Color fgColor() const {return d->fgColor;}
-	Color bgColor() const {return d->bgColor;}
-	void setColor(Color fg, Color bg) {d->fgColor = fg; d->bgColor = bg;}
-	Attributes attributes() const {return d->attributes;}
-	void setAttributes(Attributes a) {d->attributes = a;}
+	QChar letter() const {return QChar(m_unicode);}
+	void setLetter(QChar c) {m_unicode = c.unicode();}
+	Color fgColor() const {return m_fgColor;}
+	Color bgColor() const {return m_bgColor;}
+	void setColor(Color fg, Color bg) {m_fgColor = fg; m_bgColor = bg;}
+	Attributes attributes() const {return m_attributes;}
+	void setAttributes(Attributes a) {m_attributes = a;}
+private:
+	quint32 m_unicode:16;
+	quint32 m_fgColor:4;
+	quint32 m_bgColor:4;
+	quint32 m_attributes:8;
 };
 
 class ScreenLine : public QList<ScreenCell>
@@ -242,6 +224,7 @@ public:
 	void escape_sgm(const QStringList &params);
 
 	void escape_charAttr(const QStringList &params);
+	void escape_ignored(const QStringList &params);
 };
 
 }

@@ -14,6 +14,7 @@ MainWindow::MainWindow(core::term::SlavePtyProcess *pty_process, QWidget *parent
     ui->setupUi(this);
 	m_terminal = new core::term::Terminal(pty_process, this);
 	ui->terminalWidget->setTerminal(m_terminal);
+	resize(800, 700);
 }
 
 MainWindow::~MainWindow()
