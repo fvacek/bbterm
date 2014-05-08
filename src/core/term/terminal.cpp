@@ -3,6 +3,9 @@
 #include "slaveptyprocess.h"
 #include "screenbuffer.h"
 
+//#define NO_BBTERM_LOG_DEBUG
+#include <core/util/log.h>
+
 #include <QDebug>
 
 using namespace core::term;
@@ -31,6 +34,13 @@ ScreenBuffer *Terminal::screenBuffer()
 void Terminal::onPtyProcessReadyRead()
 {
 	QByteArray ba = m_slavePtyProcess->readAll();
+	/*
+	LOGDEB() << "$$$$$$$$$$$$$$$$$$$$$$";
+	LOGDEB() << ba;
+	LOGDEB() << "==============================================================";
+	LOGDEB() << ba.toHex();
+	LOGDEB() << "$$$$$$$$$$$$$$$$$$$$$$";
+	*/
 	QString s = QString::fromUtf8(ba);
 	m_screenBuffer->processInput(s);
 }

@@ -24,7 +24,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	else if (pid == 0) {
-		setenv("TERM", "vt100", 1);
+		//setenv("TERM", "vt100", 1);
+		setenv("TERM", "xterm", 1);
 		if (execlp("/bin/sh", "sh", (void*)0) == -1) {
 		//if (execlp("cat", "cat", (void*)0) == -1) {
 			perror("execlp");
