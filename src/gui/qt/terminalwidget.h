@@ -1,21 +1,21 @@
 #ifndef TERMINALWIDGET_H
 #define TERMINALWIDGET_H
 
+#include "palette.h"
+
 #include <QWidget>
 #include <QFont>
 #include <QResizeEvent>
 
 namespace core {
 namespace term {
+class ScreenCell;
 class Terminal;
 }
 }
 
 namespace gui {
 namespace qt {
-
-
-//#define Q_DECL_OVERRIDE
 
 class TerminalWidget : public QWidget
 {
@@ -30,12 +30,16 @@ protected:
 private:
 	void setupGeometry();
 	void setupFont(int point_size);
+	QPen penForCell(const core::term::ScreenCell &cell);
+	QBrush brushForCell(const core::term::ScreenCell &cell);
 	Q_SLOT void invalidateRegion(const QRect &dirty_rect);
 private:
 	core::term::Terminal *m_terminal;
 	QFont m_font;
 	int m_charWidthPx;
 	int m_charHeightPx;
+	int m_charShiftPx;
+	Palette m_palete;
 };
 
 }

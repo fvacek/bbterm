@@ -54,6 +54,20 @@ public:
 	void setColor(Color fg, Color bg) {m_fgColor = fg; m_bgColor = bg;}
 	Attributes attributes() const {return m_attributes;}
 	void setAttributes(Attributes a) {m_attributes = a;}
+	bool isAllAttributesEqual(const ScreenCell &o) {
+		return m_fgColor == o.m_fgColor && m_bgColor == o.m_bgColor && m_attributes == o.m_attributes;
+	}
+
+	/*
+	int allAttributes() const {
+		return m_fgColor | (m_bgColor << 4) | (m_attributes << 8);
+	}
+	void setAllAttributes(int a) {
+		m_fgColor =  a & ~(~0 << 4);
+		m_bgColor =  (a & ~(~0 << 8)) >> 4;
+		m_attributes =  a >> 8;
+	}
+	*/
 private:
 	quint32 m_unicode:16;
 	quint32 m_fgColor:4;
@@ -63,6 +77,17 @@ private:
 
 class ScreenLine : public QList<ScreenCell>
 {
+public:
+/*
+struct AttributedString
+{
+	QString text;
+	int attributes;
+
+	AttributedString(const QString &t = QString(), int a = 0) : text(t), attributes(a) {}
+};
+typedef QList<AttributedString> AttributedStringList;
+*/
 public:
 	ScreenCell& cellAt(int ix)
 	{
@@ -83,9 +108,8 @@ public:
 		}
 		return ret;
 	}
+	//AttributedStringList toAttributedStrings() const;
 };
-
-struct EscCommand;
 
 class ScreenBuffer : public QObject
 {
@@ -119,114 +143,129 @@ private:
 	ScreenCell::Color m_currentBgColor;
 	ScreenCell::Attributes m_currentAttributes;
 public:
-	void escape_acsc(EscCommand *esc_cmd, const QStringList &params);
-	void escape_bel(EscCommand *esc_cmd, const QStringList &params);
-	//void escape_blink(EscCommand *esc_cmd, const QStringList &params);
-	void escape_bold(EscCommand *esc_cmd, const QStringList &params);
-	void escape_cbt(EscCommand *esc_cmd, const QStringList &params);
-	void escape_clear(EscCommand *esc_cmd, const QStringList &params);
-	void escape_cr(EscCommand *esc_cmd, const QStringList &params);
-	void escape_csr(EscCommand *esc_cmd, const QStringList &params);
-	void escape_cub(EscCommand *esc_cmd, const QStringList &params);
-	//void escape_cub1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_cud(EscCommand *esc_cmd, const QStringList &params);
-	//void escape_cud1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_cuf(EscCommand *esc_cmd, const QStringList &params);
-	//void escape_cuf1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_cup(EscCommand *esc_cmd, const QStringList &params);
-	void escape_cuu(EscCommand *esc_cmd, const QStringList &params);
-	void escape_cuu1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_dch(EscCommand *esc_cmd, const QStringList &params);
-	void escape_dch1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_dl(EscCommand *esc_cmd, const QStringList &params);
-	void escape_dl1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_ech(EscCommand *esc_cmd, const QStringList &params);
-	void escape_ed(EscCommand *esc_cmd, const QStringList &params);
-	void escape_el(EscCommand *esc_cmd, const QStringList &params);
-	void escape_el1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_enacs(EscCommand *esc_cmd, const QStringList &params);
-	void escape_home(EscCommand *esc_cmd, const QStringList &params);
-	void escape_hpa(EscCommand *esc_cmd, const QStringList &params);
-	void escape_ht(EscCommand *esc_cmd, const QStringList &params);
-	void escape_hts(EscCommand *esc_cmd, const QStringList &params);
-	void escape_ich(EscCommand *esc_cmd, const QStringList &params);
-	void escape_il(EscCommand *esc_cmd, const QStringList &params);
-	void escape_il1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_ind(EscCommand *esc_cmd, const QStringList &params);
-	void escape_indn(EscCommand *esc_cmd, const QStringList &params);
-	void escape_invis(EscCommand *esc_cmd, const QStringList &params);
-	void escape_ka1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_ka3(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kb2(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kbct(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kbs(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kc1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kc3(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kcbt(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kcub1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kcud1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kcuf1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kcuu1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kent(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kf0(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kf1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kf10(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kf2(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kf3(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kf4(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kf5(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kf6(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kf7(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kf8(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kf9(EscCommand *esc_cmd, const QStringList &params);
-	void escape_khome(EscCommand *esc_cmd, const QStringList &params);
-	void escape_kich1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_lf1(EscCommand *esc_cmd, const QStringList &params);
-	void escape_lf2(EscCommand *esc_cmd, const QStringList &params);
-	void escape_lf3(EscCommand *esc_cmd, const QStringList &params);
-	void escape_lf4(EscCommand *esc_cmd, const QStringList &params);
-	void escape_mc0(EscCommand *esc_cmd, const QStringList &params);
-	void escape_mc4(EscCommand *esc_cmd, const QStringList &params);
-	void escape_mc5(EscCommand *esc_cmd, const QStringList &params);
-	void escape_nel(EscCommand *esc_cmd, const QStringList &params);
-	void escape_op(EscCommand *esc_cmd, const QStringList &params);
-	void escape_rc(EscCommand *esc_cmd, const QStringList &params);
-	void escape_rep(EscCommand *esc_cmd, const QStringList &params);
-	void escape_rev(EscCommand *esc_cmd, const QStringList &params);
-	void escape_ri(EscCommand *esc_cmd, const QStringList &params);
-	void escape_rin(EscCommand *esc_cmd, const QStringList &params);
-	void escape_rmacs(EscCommand *esc_cmd, const QStringList &params);
-	void escape_rmam(EscCommand *esc_cmd, const QStringList &params);
-	void escape_rmkx(EscCommand *esc_cmd, const QStringList &params);
-	void escape_rmpch(EscCommand *esc_cmd, const QStringList &params);
-	//void escape_rmso(EscCommand *esc_cmd, const QStringList &params);
-	//void escape_rmul(EscCommand *esc_cmd, const QStringList &params);
-	void escape_rs2(EscCommand *esc_cmd, const QStringList &params);
-	void escape_s0ds(EscCommand *esc_cmd, const QStringList &params);
-	void escape_s1ds(EscCommand *esc_cmd, const QStringList &params);
-	void escape_s2ds(EscCommand *esc_cmd, const QStringList &params);
-	void escape_s3ds(EscCommand *esc_cmd, const QStringList &params);
-	void escape_sc(EscCommand *esc_cmd, const QStringList &params);
-	void escape_setab(EscCommand *esc_cmd, const QStringList &params);
-	void escape_setaf(EscCommand *esc_cmd, const QStringList &params);
-	void escape_sgr(EscCommand *esc_cmd, const QStringList &params);
-	//void escape_sgr0(EscCommand *esc_cmd, const QStringList &params);
-	void escape_smacs(EscCommand *esc_cmd, const QStringList &params);
-	void escape_smam(EscCommand *esc_cmd, const QStringList &params);
-	void escape_smkx(EscCommand *esc_cmd, const QStringList &params);
-	void escape_smpch(EscCommand *esc_cmd, const QStringList &params);
-	//void escape_smso(EscCommand *esc_cmd, const QStringList &params);
-	//void escape_smul(EscCommand *esc_cmd, const QStringList &params);
-	void escape_tbc(EscCommand *esc_cmd, const QStringList &params);
-	void escape_u6(EscCommand *esc_cmd, const QStringList &params);
-	void escape_u7(EscCommand *esc_cmd, const QStringList &params);
-	void escape_u8(EscCommand *esc_cmd, const QStringList &params);
-	void escape_u9(EscCommand *esc_cmd, const QStringList &params);
-	void escape_vpa(EscCommand *esc_cmd, const QStringList &params);
-	void escape_sgm(EscCommand *esc_cmd, const QStringList &params);
+	void cmdCursorMove(const QStringList &params);
+	void cmdCursorMoveRight(const QStringList &params);
+	void cmdCursorMoveDown(const QStringList &params);
+	void cmdCursorMoveLeft(const QStringList &params);
+	void cmdCursorMoveUp(const QStringList &params);
 
-	void escape_charAttr(EscCommand *esc_cmd, const QStringList &params);
-	void escape_ignored(EscCommand *esc_cmd, const QStringList &params);
+	void cmdCursorSave(const QStringList &params);
+	void cmdCursorRestore(const QStringList &params);
+
+	void cmdClearToEndOfLine(const QStringList &params);
+	void cmdClearFromBeginningOfLine(const QStringList &params);
+	void cmdClearLine(const QStringList &params);
+
+	void cmdClearToEndOfScreen(const QStringList &params);
+	void cmdClearFromBeginningOfScreen(const QStringList &params);
+	void cmdClearScreen(const QStringList &params);
+
+	void cmdHorizontalTab(const QStringList &params);
+
+	void cmdSetCharAttributes(const QStringList &params);
+
+	void cmdBackSpace(const QStringList &params);
+public:
+	void escape_cr(const QStringList &params);
+	void escape_changeScrollingRegion(const QStringList &params);
+
+	void escape_controlSequenceCommand(const QStringList &params);
+	void escape_operatingSystemCommand(const QStringList &params);
+
+	void escape_ignored(const QStringList &params);
+	/*
+	void escape_acsc(const QStringList &params);
+	//void escape_blink(const QStringList &params);
+	void escape_bold(const QStringList &params);
+	void escape_cbt(const QStringList &params);
+	void escape_clear(const QStringList &params);
+	//void escape_cub1(const QStringList &params);
+	//void escape_cud1(const QStringList &params);
+	//void escape_cuf1(const QStringList &params);
+	void escape_cuu1(const QStringList &params);
+	void escape_dch(const QStringList &params);
+	void escape_dch1(const QStringList &params);
+	void escape_dl(const QStringList &params);
+	void escape_dl1(const QStringList &params);
+	void escape_ech(const QStringList &params);
+	void escape_enacs(const QStringList &params);
+	void escape_hpa(const QStringList &params);
+	void escape_hts(const QStringList &params);
+	void escape_ich(const QStringList &params);
+	void escape_il(const QStringList &params);
+	void escape_il1(const QStringList &params);
+	void escape_ind(const QStringList &params);
+	void escape_indn(const QStringList &params);
+	void escape_invis(const QStringList &params);
+	void escape_ka1(const QStringList &params);
+	void escape_ka3(const QStringList &params);
+	void escape_kb2(const QStringList &params);
+	void escape_kbct(const QStringList &params);
+	void escape_kc1(const QStringList &params);
+	void escape_kc3(const QStringList &params);
+	void escape_kcbt(const QStringList &params);
+	void escape_kcub1(const QStringList &params);
+	void escape_kcud1(const QStringList &params);
+	void escape_kcuf1(const QStringList &params);
+	void escape_kcuu1(const QStringList &params);
+	void escape_kent(const QStringList &params);
+	void escape_kf0(const QStringList &params);
+	void escape_kf1(const QStringList &params);
+	void escape_kf10(const QStringList &params);
+	void escape_kf2(const QStringList &params);
+	void escape_kf3(const QStringList &params);
+	void escape_kf4(const QStringList &params);
+	void escape_kf5(const QStringList &params);
+	void escape_kf6(const QStringList &params);
+	void escape_kf7(const QStringList &params);
+	void escape_kf8(const QStringList &params);
+	void escape_kf9(const QStringList &params);
+	void escape_khome(const QStringList &params);
+	void escape_kich1(const QStringList &params);
+	void escape_lf1(const QStringList &params);
+	void escape_lf2(const QStringList &params);
+	void escape_lf3(const QStringList &params);
+	void escape_lf4(const QStringList &params);
+	void escape_mc0(const QStringList &params);
+	void escape_mc4(const QStringList &params);
+	void escape_mc5(const QStringList &params);
+	void escape_nel(const QStringList &params);
+	void escape_op(const QStringList &params);
+	void escape_rc(const QStringList &params);
+	void escape_rep(const QStringList &params);
+	void escape_rev(const QStringList &params);
+	void escape_ri(const QStringList &params);
+	void escape_rin(const QStringList &params);
+	void escape_rmacs(const QStringList &params);
+	void escape_rmam(const QStringList &params);
+	void escape_rmkx(const QStringList &params);
+	void escape_rmpch(const QStringList &params);
+	//void escape_rmso(const QStringList &params);
+	//void escape_rmul(const QStringList &params);
+	void escape_rs2(const QStringList &params);
+	void escape_s0ds(const QStringList &params);
+	void escape_s1ds(const QStringList &params);
+	void escape_s2ds(const QStringList &params);
+	void escape_s3ds(const QStringList &params);
+	void escape_sc(const QStringList &params);
+	void escape_setab(const QStringList &params);
+	void escape_setaf(const QStringList &params);
+	void escape_sgr(const QStringList &params);
+	//void escape_sgr0(const QStringList &params);
+	void escape_smacs(const QStringList &params);
+	void escape_smam(const QStringList &params);
+	void escape_smkx(const QStringList &params);
+	void escape_smpch(const QStringList &params);
+	//void escape_smso(const QStringList &params);
+	//void escape_smul(const QStringList &params);
+	void escape_tbc(const QStringList &params);
+	void escape_u6(const QStringList &params);
+	void escape_u7(const QStringList &params);
+	void escape_u8(const QStringList &params);
+	void escape_u9(const QStringList &params);
+	void escape_vpa(const QStringList &params);
+	void escape_sgm(const QStringList &params);
+	*/
 };
 
 }

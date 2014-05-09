@@ -33,32 +33,20 @@ int ScreenBuffer::firstVisibleLineIndex() const
 	return start_ix;
 }
 
-#define DEBUG_LTPR() {if(!line_to_print_debug.isEmpty()) {LOGDEB() << line_to_print_debug; line_to_print_debug = QString();}}
-/*
-QStringList dump_string(const QString &s, int w)
-{
-	QStringList ret;
-	QString s1;
-	QString s2 = s.toLatin1().toHex();
-	QByteArray ba;
-	for(int i=0; i<s.length(); i++) {
-		s1 += " " + s[i];
-		s2 += s.mid(i, 1).toAscii().toHex();
-	}
-}
-*/
+//#define DEBUG_LTPR() {if(!line_to_print_debug.isEmpty()) {LOGDEB() << line_to_print_debug; line_to_print_debug = QString();}}
+
 void ScreenBuffer::processInput(const QString &input)
 {
 	m_inputBuffer += input;
-	LOGDEB() << "processing input:" << input;
+	//LOGDEB() << "processing input:" << input;
 	int consumed = 0;
 	QRect dirty_rect;
-	QString line_to_print_debug;
+	//QString line_to_print_debug;
 	while(consumed < m_inputBuffer.length()) {
 		QChar c = m_inputBuffer[consumed];
 		if(c >= ' ') {
 			//LOGDEB() << "++++" << c;
-			line_to_print_debug += c;
+			//line_to_print_debug += c;
 			int ix = firstVisibleLineIndex() + m_currentPosition.y();
 			if(ix >= rowCount()) {
 				qCritical() << "attempt to write on not existing line index" << ix << "of" << rowCount();
@@ -66,7 +54,6 @@ void ScreenBuffer::processInput(const QString &input)
 			else {
 				ScreenLine &line = m_lineBuffer.at(ix);
 				ScreenCell &cell = line.cellAt(m_currentPosition.x());
-				//DBG() << c;
 				cell.setLetter(c);
 				cell.setColor(m_currentFgColor, m_currentBgColor);
 				cell.setAttributes(m_currentAttributes);
@@ -74,7 +61,6 @@ void ScreenBuffer::processInput(const QString &input)
 			// advance cursor to next position
 			m_currentPosition.setX(m_currentPosition.x() + 1);
 			if(m_currentPosition.x() >= terminalSize().width()) {
-				//LOGDEB() << "@@@@@@@@@@@@" << m_lineBuffer.value(m_lineBuffer.count() - 1).toString();
 				m_currentPosition.setY(m_currentPosition.y() + 1);
 				if(m_currentPosition.y() + firstVisibleLineIndex() >= rowCount()) {
 						appendLine(false);
@@ -83,16 +69,15 @@ void ScreenBuffer::processInput(const QString &input)
 			consumed++;
 		}
 		else {
-			DEBUG_LTPR();
+			//DEBUG_LTPR();
 			int seq_len = processControlSequence(consumed);
 			if(seq_len > 0) {
 				//LOGDEB() << "SEQ LEN:" << seq_len;
 				consumed += seq_len;
 			}
 			else {
-				LOGWARN() << "unrecognized escape sequence:"
-				<< m_inputBuffer.mid(consumed, 1).toUtf8().toHex()
-				<< m_inputBuffer.mid(consumed, 10);
+				LOGWARN() << "unrecognized escape sequence:" << m_inputBuffer.mid(consumed, 200);
+				LOGWARN() << "unrecognized escape sequence:" << m_inputBuffer.mid(consumed, 20).toLatin1().toHex();
 				consumed++;
 			}
 		}
@@ -102,13 +87,13 @@ void ScreenBuffer::processInput(const QString &input)
 		// TODO: implement dirty rect
 		emit dirtyRegion(dirty_rect);
 	}
-	DEBUG_LTPR();
-	LOGDEB() << "dump\n" << dump();
+	//DEBUG_LTPR();
+	//LOGDEB() << "dump\n" << dump();
 }
 
 void ScreenBuffer::appendLine(bool move_cursor)
 {
-	LOGDEB() << Q_FUNC_INFO;
+	//LOGDEB() << Q_FUNC_INFO;
 	m_lineBuffer.append(ScreenLine());
 	if(move_cursor) {
 		m_currentPosition.setX(0);
@@ -128,4 +113,23 @@ QString ScreenBuffer::dump() const
 	}
 	return lines.join("\n");
 }
+/*
+ScreenLine::AttributedStringList ScreenLine::toAttributedStrings() const
+{
+	AttributedStringList ret;
+	AttributedString curr_attr_str;
+	foreach(const ScreenCell &c, *this) {
+		int attrs = c.allAttributes();
+		if(attrs != curr_attr_str.second) {
+			if(!curr_attr_str.first.isEmpty()) {
+				ret << curr_attr_str;
+			}
+		}
+		QChar ch = c.letter();
+		if(ch.isNull())
+			ch = ' ';
+		ret += ch;
+	}
+}
+*/
 
