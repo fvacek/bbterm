@@ -5,7 +5,7 @@
 #include <QStringList>
 #include <QDebug>
 
-//#define DEBUG_ESCAPES_PROCESSING
+#define DEBUG_ESCAPES_PROCESSING
 #ifdef DEBUG_ESCAPES_PROCESSING
 #define ESC_DEBUG() qDebug() << "<CTL>" << __FUNCTION__ << "captions:" << params.join(" - ")
 #define ESC_DEBUG_IGNORED() qDebug() << "<CTL IGNORED>" << __FUNCTION__ << "captions:" << params.join(" - ")
@@ -55,66 +55,6 @@ static EscCommand esc_commands[] = {
 
 	{QLatin1String("^\x001b\\[([?])?(([0-9]+)?(;[0-9]*)*)([a-zA-Z])"), &ScreenBuffer::escape_controlSequenceCommand, true, "ESC [ p1;p2;... C"},
 	{QLatin1String("^\x001b\\]([0-9]+);([^\x0007]*)\x0007"), &ScreenBuffer::escape_operatingSystemCommand, true, "ESC ] p1;text ST|BEL"},
-
-	/*
-	{QLatin1String("^\x001b\\[\\?([0-9]*)h"), &ScreenBuffer::escape_ignored, true, "setup terminal"},
-	{QLatin1String("^\x001b\\[([0-9]*)m"), &ScreenBuffer::escape_charAttr, true, "set character attributes"},
-	{QLatin1String("\x1b[2J"), &ScreenBuffer::escape_clear, false, ""},
-	{QLatin1String("^\x001b\\[([0-9]*);([0-9]*)r"), &ScreenBuffer::escape_csr, true, ""},
-	{QLatin1String("^\x001b\\[([0-9]*)D"), &ScreenBuffer::escape_cub, true, ""},
-	{QLatin1String("^\x001b\\[([0-9]*)B"), &ScreenBuffer::escape_cud, true, "Move down # lines"},
-	{QLatin1String("^\x001b\\[([0-9]*)C"), &ScreenBuffer::escape_cuf, true, "CUF Move right # spaces"},
-	{QLatin1String("^\x001b\\[([0-9]+);([0-9]+)H"), &ScreenBuffer::escape_cup, true, ""},
-	{QLatin1String("^\x001b\\[([0-9]+)A"), &ScreenBuffer::escape_cuu, true, ""},
-	{QLatin1String("\x1b[A"), &ScreenBuffer::escape_cuu1, false, ""},
-	{QLatin1String("\x1b[J"), &ScreenBuffer::escape_ed, false, "Clear to end of display"},
-	{QLatin1String("\x1b[1K"), &ScreenBuffer::escape_el1, false, "Clear from beginning of line to cursor"},
-	{QLatin1String("\x1b(B\x1b)0"), &ScreenBuffer::escape_enacs, false, ""},
-	{QLatin1String("\x1b[H"), &ScreenBuffer::escape_home, false, ""},
-	{QLatin1String("\x1bH"), &ScreenBuffer::escape_hts, false, ""},
-	//{QLatin1String("\xa"), &ScreenBuffer::escape_ind, false, ""},
-	{QLatin1String("\x1bOq"), &ScreenBuffer::escape_ka1, false, ""},
-	{QLatin1String("\x1bOs"), &ScreenBuffer::escape_ka3, false, ""},
-	{QLatin1String("\x1bOr"), &ScreenBuffer::escape_kb2, false, ""},
-	{QLatin1String("\x8"), &ScreenBuffer::escape_kbs, false, ""},
-	{QLatin1String("\x1bOp"), &ScreenBuffer::escape_kc1, false, ""},
-	{QLatin1String("\x1bOn"), &ScreenBuffer::escape_kc3, false, ""},
-	{QLatin1String("\x1bOD"), &ScreenBuffer::escape_kcub1, false, ""},
-	{QLatin1String("\x1bOB"), &ScreenBuffer::escape_kcud1, false, ""},
-	{QLatin1String("\x1bOC"), &ScreenBuffer::escape_kcuf1, false, ""},
-	{QLatin1String("\x1bOA"), &ScreenBuffer::escape_kcuu1, false, ""},
-	{QLatin1String("\x1bOM"), &ScreenBuffer::escape_kent, false, ""},
-	{QLatin1String("\x1bOy"), &ScreenBuffer::escape_kf0, false, ""},
-	{QLatin1String("\x1bOP"), &ScreenBuffer::escape_kf1, false, ""},
-	{QLatin1String("\x1bOx"), &ScreenBuffer::escape_kf10, false, ""},
-	{QLatin1String("\x1bOQ"), &ScreenBuffer::escape_kf2, false, ""},
-	{QLatin1String("\x1bOR"), &ScreenBuffer::escape_kf3, false, ""},
-	{QLatin1String("\x1bOS"), &ScreenBuffer::escape_kf4, false, ""},
-	{QLatin1String("\x1bOt"), &ScreenBuffer::escape_kf5, false, ""},
-	{QLatin1String("\x1bOu"), &ScreenBuffer::escape_kf6, false, ""},
-	{QLatin1String("\x1bOv"), &ScreenBuffer::escape_kf7, false, ""},
-	{QLatin1String("\x1bOl"), &ScreenBuffer::escape_kf8, false, ""},
-	{QLatin1String("\x1bOw"), &ScreenBuffer::escape_kf9, false, ""},
-	// lf1
-	// lf2
-	// lf3
-	// lf4
-	{QLatin1String("\x1b[0i"), &ScreenBuffer::escape_mc0, false, ""},
-	{QLatin1String("\x1b[4i"), &ScreenBuffer::escape_mc4, false, ""},
-	{QLatin1String("\x1b[5i"), &ScreenBuffer::escape_mc5, false, ""},
-	{QLatin1String("\x1b""8"), &ScreenBuffer::escape_rc, false, ""},
-	{QLatin1String("\x1bM"), &ScreenBuffer::escape_ri, false, ""},
-	{QLatin1String("\x1b[?7l"), &ScreenBuffer::escape_rmam, false, ""},
-	{QLatin1String("\x1b[?1l\x1b>"), &ScreenBuffer::escape_rmkx, false, ""},
-	// rs2
-	{QLatin1String("\x1b""7"), &ScreenBuffer::escape_sc, false, ""},
-	// sgr
-	{QLatin1String("\xf"), &ScreenBuffer::escape_rmacs, false, "SI shift in"},
-	{QLatin1String("\xe"), &ScreenBuffer::escape_smacs, false, "SO shift out"},
-	{QLatin1String("\x1b[?7h"), &ScreenBuffer::escape_smam, false, ""},
-	{QLatin1String("\x1b[?1h\x1b"), &ScreenBuffer::escape_smkx, false, ""},
-	{QLatin1String("\x1b[3g"), &ScreenBuffer::escape_tbc, false, ""},
-	*/
 };
 static const int esc_commands_count = sizeof(esc_commands)/sizeof(EscCommand);
 

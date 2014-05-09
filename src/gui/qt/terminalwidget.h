@@ -27,11 +27,14 @@ public:
 protected:
 	void paintEvent(QPaintEvent *ev) Q_DECL_OVERRIDE;
 	void resizeEvent(QResizeEvent *ev) Q_DECL_OVERRIDE;
+	void keyPressEvent(QKeyEvent *ev) Q_DECL_OVERRIDE;
 private:
 	void setupGeometry();
 	void setupFont(int point_size);
 	QPen penForCell(const core::term::ScreenCell &cell);
 	QBrush brushForCell(const core::term::ScreenCell &cell);
+	void paintText(QPainter *painter, const QPoint &term_pos, const QString &text, const core::term::ScreenCell &text_attrs);
+
 	Q_SLOT void invalidateRegion(const QRect &dirty_rect);
 private:
 	core::term::Terminal *m_terminal;

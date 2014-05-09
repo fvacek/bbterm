@@ -1,6 +1,7 @@
 #include "terminalwidget.h"
 
 #include <core/term/screenbuffer.h>
+#include <core/term/slaveptyprocess.h>
 #include <core/term/terminal.h>
 
 #include <QPainter>
@@ -45,18 +46,6 @@ void TerminalWidget::setupFont(int point_size)
 		LOGDEB() << "char width:" << m_charWidthPx << "height:" << m_charHeightPx << "leading:" << m_charShiftPx;
 }
 
-QPen TerminalWidget::penForCell(const core::term::ScreenCell &cell)
-{
-	QColor color = m_palete.getColor(cell.fgColor(), cell.attributes() | core::term::ScreenCell::AttrBright);
-	return QPen(color);
-}
-
-QBrush TerminalWidget::brushForCell(const core::term::ScreenCell &cell)
-{
-	QColor color = m_palete.getColor(cell.bgColor(), false);
-	return QBrush(color);
-}
-
 void TerminalWidget::invalidateRegion(const QRect &dirty_rect)
 {
 	LOGDEB() << Q_FUNC_INFO;
@@ -87,39 +76,78 @@ void TerminalWidget::paintEvent(QPaintEvent *ev)
 	painter.fillRect(r, QBrush(bg_color));
 	core::term::ScreenBuffer *screen_buffer = m_terminal->screenBuffer();
 	int row_count = screen_buffer->rowCount();
-	int start_ix = screen_buffer->firstVisibleLineIndex();
+	int start_line_ix = screen_buffer->firstVisibleLineIndex();
 	//LOGDEB() << start_ix << row_count;
-	for(int i=start_ix; i<row_count; i++) {
+	for(int i=start_line_ix; i<row_count; i++) {
 		const core::term::ScreenLine screen_line = screen_buffer->lineAt(i);
 		QString line_str = screen_line.toString();
 		core::term::ScreenCell first_cell;
 		first_cell.setAttributes(0xff);
-		int curr_pos = 0;
-		int curr_len = 0;
-		while(curr_pos + curr_len <= line_str.length()) {
-			core::term::ScreenCell cell = screen_line.value(curr_pos + curr_len);
+		int term_y = i - start_line_ix;
+		int chunk_pos = 0;
+		int chunk_len = 0;
+		while(chunk_pos + chunk_len < line_str.length()) {
+			core::term::ScreenCell cell = screen_line.value(chunk_pos + chunk_len);
+			//int term_x = chunk_pos + chunk_len;
 			if(cell.isAllAttributesEqual(first_cell)) {
-				curr_len++;
+				chunk_len++;
 			}
 			else {
-				if(curr_len > 0) {
-					QString s = line_str.mid(curr_pos, curr_len);
-					int x = curr_pos * m_charWidthPx;
-					int y = (i - start_ix) * m_charHeightPx;
-					//LOGDEB() << y << line_str;
-					QRect r(x, y, curr_len * m_charWidthPx, m_charHeightPx);
-					painter.fillRect(r, brushForCell(first_cell));
-					painter.setPen(penForCell(first_cell));
-					//painter.setBrush(brushForCell(first_cell));
-
-					painter.drawText(x, y + m_charHeightPx - m_charShiftPx, s);
+				if(chunk_len > 0) {
+					QString s = line_str.mid(chunk_pos, chunk_len);
+					paintText(&painter, QPoint(chunk_pos, term_y), s, first_cell);
 				}
 				first_cell = cell;
-				curr_pos += curr_len;
-				curr_len = 0;
+				chunk_pos += chunk_len;
+				chunk_len = 0;
 			}
 		}
+		if(chunk_len > 0) {
+			QString s = line_str.mid(chunk_pos, chunk_len);
+			paintText(&painter, QPoint(chunk_pos, term_y), s, first_cell);
+		}
 	}
+	{
+		// print cursor
+		QPoint cursor_pos = screen_buffer->cursorPosition();
+		const core::term::ScreenLine screen_line = screen_buffer->lineAt(start_line_ix + cursor_pos.y());
+		core::term::ScreenCell cell = screen_line.value(cursor_pos.x());
+		if(cell.isNull()) cell.setLetter(' ');
+		// flip reverse attribute
+		int atts = cell.attributes();
+		atts = atts ^ core::term::ScreenCell::AttrReverse;
+		cell.setAttributes(atts);
+		paintText(&painter, cursor_pos, QString(cell.letter()), cell);
+	}
+}
+
+void TerminalWidget::paintText(QPainter *painter, const QPoint &term_pos, const QString &text, const core::term::ScreenCell &text_attrs)
+{
+	int px_x = term_pos.x() * m_charWidthPx;
+	int px_y = term_pos.y() * m_charHeightPx;
+	//LOGDEB() << term_pos.x() << term_pos.y() << text;
+	QRect r(px_x, px_y, text.length() * m_charWidthPx, m_charHeightPx);
+	painter->fillRect(r, brushForCell(text_attrs));
+	painter->setPen(penForCell(text_attrs));
+	painter->drawText(px_x, px_y + m_charHeightPx - m_charShiftPx, text);
+}
+
+QPen TerminalWidget::penForCell(const core::term::ScreenCell &cell)
+{
+	bool reverse = cell.attributes() & core::term::ScreenCell::AttrReverse;
+	QColor color = m_palete.getColor(reverse? cell.bgColor(): cell.fgColor(), cell.attributes() & core::term::ScreenCell::AttrBright);
+	//LOGDEB() << Q_FUNC_INFO << color.name();
+	//color = m_palete.getColor(7, false);
+	return QPen(color);
+}
+
+QBrush TerminalWidget::brushForCell(const core::term::ScreenCell &cell)
+{
+	bool reverse = cell.attributes() & core::term::ScreenCell::AttrReverse;
+	QColor color = m_palete.getColor(reverse? cell.fgColor(): cell.bgColor(), false);
+	//LOGDEB() << Q_FUNC_INFO << color.name();
+	//color = m_palete.getColor(0, false);
+	return QBrush(color);
 }
 
 void TerminalWidget::resizeEvent(QResizeEvent *ev)
@@ -137,6 +165,21 @@ void TerminalWidget::setupGeometry()
 	if(old_size != new_size) {
 		screen_buffer->setTerminalSize(new_size);
 	}
+}
+
+void TerminalWidget::keyPressEvent(QKeyEvent *ev)
+{
+	LOGDEB() << __FUNCTION__ << ev->text();
+	QString text = ev->text();
+	bool is_accepted = false;
+	core::term::SlavePtyProcess *pty = m_terminal->slavePtyProcess();
+	if(!text.isEmpty()) {
+		//QChar c = text[0];
+		pty->write(text.toUtf8());
+		is_accepted = true;
+	}
+	if(is_accepted)
+		ev->accept();
 }
 
 

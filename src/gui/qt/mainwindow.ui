@@ -16,7 +16,11 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="gui::qt::TerminalWidget" name="terminalWidget" native="true"/>
+     <widget class="gui::qt::TerminalWidget" name="terminalWidget" native="true">
+      <property name="focusPolicy">
+       <enum>Qt::StrongFocus</enum>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QLineEdit" name="edCommand"/>
@@ -41,6 +45,15 @@
    <addaction name="menuFile"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::NoToolBarArea</set>
+   </property>
+   <property name="floatable">
+    <bool>false</bool>
+   </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
    </attribute>
@@ -65,7 +78,7 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>edCommand</tabstop>
+  <tabstop>terminalWidget</tabstop>
  </tabstops>
  <resources/>
  <connections/>

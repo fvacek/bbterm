@@ -12,6 +12,9 @@ using namespace core::term;
 ScreenBuffer::ScreenBuffer(SlavePtyProcess *slave_pty_process, QObject *parent)
 : QObject(parent), m_slavePtyProcess(slave_pty_process)
 {
+	m_currentFgColor = ScreenCell::ColorWhite;
+	m_currentBgColor = ScreenCell::ColorBlack;
+	m_currentAttributes = ScreenCell::AttrReset;
 	appendLine(true);
 }
 
@@ -59,10 +62,11 @@ void ScreenBuffer::processInput(const QString &input)
 				cell.setAttributes(m_currentAttributes);
 			}
 			// advance cursor to next position
-			m_currentPosition.setX(m_currentPosition.x() + 1);
+			m_currentPosition.rx()++;
 			if(m_currentPosition.x() >= terminalSize().width()) {
-				m_currentPosition.setY(m_currentPosition.y() + 1);
-				if(m_currentPosition.y() + firstVisibleLineIndex() >= rowCount()) {
+				m_currentPosition.setX(0);
+				m_currentPosition.ry()++;
+				while(m_currentPosition.y() + firstVisibleLineIndex() >= rowCount()) {
 						appendLine(false);
 				}
 			}
