@@ -2,6 +2,7 @@
 #define SCREENBUFFER_H
 
 #include <core/util/ringbuffer.h>
+#include <core/util/ringbuffer.h>
 
 #include <QObject>
 #include <QSharedData>
@@ -57,7 +58,6 @@ public:
 	bool isAllAttributesEqual(const ScreenCell &o) {
 		return m_fgColor == o.m_fgColor && m_bgColor == o.m_bgColor && m_attributes == o.m_attributes;
 	}
-
 	/*
 	int allAttributes() const {
 		return m_fgColor | (m_bgColor << 4) | (m_attributes << 8);
@@ -78,25 +78,7 @@ private:
 class ScreenLine : public QList<ScreenCell>
 {
 public:
-/*
-struct AttributedString
-{
-	QString text;
-	int attributes;
-
-	AttributedString(const QString &t = QString(), int a = 0) : text(t), attributes(a) {}
-};
-typedef QList<AttributedString> AttributedStringList;
-*/
-public:
-	ScreenCell& cellAt(int ix)
-	{
-		while(size() <= ix) {
-			append(ScreenCell());
-		}
-		return operator[](ix);
-	}
-
+	ScreenCell& cellAt(int ix);
 	QString toString() const
 	{
 		QString ret;
@@ -108,7 +90,6 @@ public:
 		}
 		return ret;
 	}
-	//AttributedStringList toAttributedStrings() const;
 };
 
 class ScreenBuffer : public QObject
@@ -128,7 +109,7 @@ public:
 		return m_lineBuffer.value(ix);
 	}
 	int firstVisibleLineIndex() const;
-	QPoint cursorPosition() const {return m_currentPosition;}
+	QPoint cursorPosition() const {return m_cursorPosition;}
 	void processInput(const QString &input);
 private:
 	int processControlSequence(int start_pos);
@@ -139,7 +120,7 @@ private:
 	QString m_inputBuffer;
 	QSize m_terminalSize; // cols, rows
 	SlavePtyProcess *m_slavePtyProcess;
-	QPoint m_currentPosition;
+	QPoint m_cursorPosition;
 	ScreenCell::Color m_currentFgColor;
 	ScreenCell::Color m_currentBgColor;
 	ScreenCell::Attributes m_currentAttributes;

@@ -13,7 +13,14 @@
 #else
 #include <pty.h>
 #endif
-
+/*
+#ifdef QT_DEBUG
+#warning "**********************debug"
+#endif
+#ifdef QT_NO_DEBUG
+#warning "no **********************debug"
+#endif
+*/
 int main(int argc, char *argv[])
 {
 	int fd;
@@ -35,7 +42,7 @@ int main(int argc, char *argv[])
 	}
 
 	qDebug() << "Child process pid:" << pid;
-	qDebug() << "master fd" << fd;
+	qDebug() << "master fd" << fd << "slave PTY name:" << slave_pty_name;
 
 	int flags = ::fcntl(fd, F_GETFL, 0);
 	::fcntl(fd, F_SETFL, flags | O_NONBLOCK);

@@ -64,7 +64,7 @@ void ScreenBuffer::escape_cr(const QStringList &params)
 
 	Q_UNUSED(params);
 	ESC_DEBUG();
-	m_currentPosition.setX(0);
+	m_cursorPosition.setX(0);
 }
 
 // Change scrolling region
@@ -84,15 +84,15 @@ void ScreenBuffer::cmdCursorMoveDown(const QStringList &params)
 	if(!ok)
 		n = 1;
 	ESC_DEBUG() << n << "lines feed";
-	int ix = firstVisibleLineIndex() + m_currentPosition.y();
+	int ix = firstVisibleLineIndex() + m_cursorPosition.y();
 	for(int i=0; i<n; i++) {
 		ix++;
 		if(ix >= rowCount()) {
 			appendLine(true);
 		}
 		else {
-			m_currentPosition.rx() = 0;
-			m_currentPosition.ry()++;
+			m_cursorPosition.rx() = 0;
+			m_cursorPosition.ry()++;
 		}
 	}
 }
@@ -103,11 +103,11 @@ void ScreenBuffer::cmdCursorMoveLeft(const QStringList &params)
 	int n = params.value(1).toInt();
 	if(n == 0) n = 1;
 	ESC_DEBUG() << "n:" << n;
-	int x = m_currentPosition.x() - n;
+	int x = m_cursorPosition.x() - n;
 	if(x < 0) {
 		x = 0;
 	}
-	m_currentPosition.setX(x);
+	m_cursorPosition.setX(x);
 }
 
 // Move right # spaces
@@ -117,11 +117,11 @@ void ScreenBuffer::cmdCursorMoveRight(const QStringList &params)
 	int n = params.value(1).toInt();
 	if(n == 0) n = 1;
 	ESC_DEBUG() << "n:" << n;
-	int x = m_currentPosition.x() + n;
+	int x = m_cursorPosition.x() + n;
 	if(x >= m_terminalSize.width()) {
 		x = m_terminalSize.width() - 1;
 	}
-	m_currentPosition.setX(x);
+	m_cursorPosition.setX(x);
 }
 
 // Move to row #1 col #2
@@ -138,8 +138,8 @@ void ScreenBuffer::cmdCursorMove(const QStringList &params)
 			while(rowCount() <= row) {
 				appendLine(false);
 			}
-			m_currentPosition.setX(col);
-			m_currentPosition.setY(row);
+			m_cursorPosition.setX(col);
+			m_cursorPosition.setY(row);
 		}
 		else {
 			LOGWARN() << __FUNCTION__ << "col:" << row << "out of range: 0 -" << (m_terminalSize.width() - 1);
@@ -156,9 +156,9 @@ void ScreenBuffer::cmdCursorMoveUp(const QStringList &params)
 	int n = params.value(1).toInt();
 	if(n == 0) n = 1;
 	ESC_DEBUG() << "n:" << n;
-	int y = m_currentPosition.y() - n;
+	int y = m_cursorPosition.y() - n;
 	if(y < 0) { y = 0; }
-	m_currentPosition.setY(y);
+	m_cursorPosition.setY(y);
 }
 
 // Clear to end of display
@@ -166,35 +166,35 @@ void ScreenBuffer::cmdClearToEndOfScreen(const QStringList &params)
 {
 	Q_UNUSED(params);
 	ESC_DEBUG();
-	QPoint pos = m_currentPosition;
+	QPoint pos = m_cursorPosition;
 	cmdClearToEndOfLine(QStringList());
 	for(int y = pos.y() + 1; y<m_terminalSize.height(); y++) {
-		m_currentPosition.setX(0);
-		m_currentPosition.setY(y);
+		m_cursorPosition.setX(0);
+		m_cursorPosition.setY(y);
 		cmdClearToEndOfLine(QStringList());
 	}
-	m_currentPosition = pos;
+	m_cursorPosition = pos;
 }
 
 void ScreenBuffer::cmdClearFromBeginningOfScreen(const QStringList &params)
 {
 	Q_UNUSED(params);
 	ESC_DEBUG();
-	QPoint pos = m_currentPosition;
+	QPoint pos = m_cursorPosition;
 	cmdClearFromBeginningOfLine(QStringList());
 	for(int y = 0; y<pos.y(); y++) {
-		m_currentPosition.setX(0);
-		m_currentPosition.setY(y);
+		m_cursorPosition.setX(0);
+		m_cursorPosition.setY(y);
 		cmdClearToEndOfLine(QStringList());
 	}
-	m_currentPosition = pos;
+	m_cursorPosition = pos;
 }
 
 void ScreenBuffer::cmdClearScreen(const QStringList &params)
 {
 	Q_UNUSED(params);
 	ESC_DEBUG();
-	m_currentPosition = QPoint(0, 0);
+	m_cursorPosition = QPoint(0, 0);
 	cmdClearToEndOfScreen(QStringList());
 }
 
@@ -203,10 +203,10 @@ void ScreenBuffer::cmdClearToEndOfLine(const QStringList &params)
 {
 	Q_UNUSED(params);
 	ESC_DEBUG();
-	int row = firstVisibleLineIndex() + m_currentPosition.x();
+	int row = firstVisibleLineIndex() + m_cursorPosition.y();
 	if(row < rowCount()) {
 		ScreenLine &line = m_lineBuffer.at(row);
-		for(int i=m_currentPosition.x(); i<m_terminalSize.width() && i<line.length(); i++) {
+		for(int i=m_cursorPosition.x(); i<m_terminalSize.width() && i<line.length(); i++) {
 			ScreenCell &cell = line.cellAt(i);
 			cell.setLetter(QChar());
 			cell.setColor(ScreenCell::ColorWhite, ScreenCell::ColorBlack);
@@ -220,10 +220,10 @@ void ScreenBuffer::cmdClearFromBeginningOfLine(const QStringList &params)
 {
 	Q_UNUSED(params);
 	ESC_DEBUG() << "Clear from beginning of line to cursor";
-	int row = firstVisibleLineIndex() + m_currentPosition.x();
+	int row = firstVisibleLineIndex() + m_cursorPosition.y();
 	if(row < rowCount()) {
 		ScreenLine &line = m_lineBuffer.at(row);
-		for(int i=0; i<=m_currentPosition.x(); i++) {
+		for(int i=0; i<=m_cursorPosition.x(); i++) {
 			ScreenCell &cell = line.cellAt(i);
 			cell.setLetter(QChar());
 			cell.setColor(ScreenCell::ColorWhite, ScreenCell::ColorBlack);
@@ -236,7 +236,7 @@ void ScreenBuffer::cmdClearLine(const QStringList &params)
 {
 	Q_UNUSED(params);
 	ESC_DEBUG() << "Clear line";
-	int row = firstVisibleLineIndex() + m_currentPosition.x();
+	int row = firstVisibleLineIndex() + m_cursorPosition.y();
 	if(row < rowCount()) {
 		ScreenLine &line = m_lineBuffer.at(row);
 		for(int i=0; i<=line.length(); i++) {
@@ -265,10 +265,10 @@ void ScreenBuffer::cmdHorizontalTab(const QStringList &params)
 {
 	Q_UNUSED(params);
 	static const int tab_width = 8;
-	int x = m_currentPosition.x();
+	int x = m_cursorPosition.x();
 	x = (x / tab_width + 1) * tab_width;
-	m_currentPosition.setX(x);
-	if(m_currentPosition.x() >= m_terminalSize.width()) {
+	m_cursorPosition.setX(x);
+	if(m_cursorPosition.x() >= m_terminalSize.width()) {
 		//appendLine();
 	}
 }
@@ -277,7 +277,22 @@ void ScreenBuffer::cmdHorizontalTab(const QStringList &params)
 void ScreenBuffer::cmdBackSpace(const QStringList &params)
 {
 	Q_UNUSED(params);
-	ESC_DEBUG_IGNORED();
+	ESC_DEBUG();
+	m_cursorPosition.rx()--;
+	if(m_cursorPosition.x() < 0) {
+		m_cursorPosition.ry()--;
+		m_cursorPosition.rx() = 0;
+		if(m_cursorPosition.y() < 0)
+			m_cursorPosition.ry() = 0;
+	}
+	int row = firstVisibleLineIndex() + m_cursorPosition.y();
+	if(row < rowCount()) {
+		ScreenLine &line = m_lineBuffer.at(row);
+		ScreenCell &cell = line.cellAt(m_cursorPosition.x());
+		cell.setLetter(QChar());
+		//cell.setColor(ScreenCell::ColorWhite, ScreenCell::ColorBlack);
+		//cell.setAttributes(ScreenCell::AttrReset);
+	}
 }
 
 void ScreenBuffer::cmdSetCharAttributes(const QStringList &params)

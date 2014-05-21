@@ -9,6 +9,24 @@
 
 using namespace core::term;
 
+//====================================================
+// ScreenLine
+//====================================================
+ScreenCell &ScreenLine::cellAt(int ix)
+{
+	if(ix < 0) {
+		LOGWARN() << "Internal error, cell index < 0, ix:" << ix;
+		ix = 0;
+	}
+	while(size() <= ix) {
+		append(ScreenCell());
+	}
+	return operator[](ix);
+}
+
+//====================================================
+// ScreenBuffer
+//====================================================
 ScreenBuffer::ScreenBuffer(SlavePtyProcess *slave_pty_process, QObject *parent)
 : QObject(parent), m_slavePtyProcess(slave_pty_process)
 {
@@ -41,7 +59,7 @@ int ScreenBuffer::firstVisibleLineIndex() const
 void ScreenBuffer::processInput(const QString &input)
 {
 	m_inputBuffer += input;
-	//LOGDEB() << "processing input:" << input;
+	LOGDEB() << "processing input:" << input;
 	int consumed = 0;
 	QRect dirty_rect;
 	//QString line_to_print_debug;
@@ -50,23 +68,23 @@ void ScreenBuffer::processInput(const QString &input)
 		if(c >= ' ') {
 			//LOGDEB() << "++++" << c;
 			//line_to_print_debug += c;
-			int ix = firstVisibleLineIndex() + m_currentPosition.y();
+			int ix = firstVisibleLineIndex() + m_cursorPosition.y();
 			if(ix >= rowCount()) {
 				qCritical() << "attempt to write on not existing line index" << ix << "of" << rowCount();
 			}
 			else {
 				ScreenLine &line = m_lineBuffer.at(ix);
-				ScreenCell &cell = line.cellAt(m_currentPosition.x());
+				ScreenCell &cell = line.cellAt(m_cursorPosition.x());
 				cell.setLetter(c);
 				cell.setColor(m_currentFgColor, m_currentBgColor);
 				cell.setAttributes(m_currentAttributes);
 			}
 			// advance cursor to next position
-			m_currentPosition.rx()++;
-			if(m_currentPosition.x() >= terminalSize().width()) {
-				m_currentPosition.setX(0);
-				m_currentPosition.ry()++;
-				while(m_currentPosition.y() + firstVisibleLineIndex() >= rowCount()) {
+			m_cursorPosition.rx()++;
+			if(m_cursorPosition.x() >= terminalSize().width()) {
+				m_cursorPosition.setX(0);
+				m_cursorPosition.ry()++;
+				while(m_cursorPosition.y() + firstVisibleLineIndex() >= rowCount()) {
 						appendLine(false);
 				}
 			}
@@ -100,11 +118,11 @@ void ScreenBuffer::appendLine(bool move_cursor)
 	//LOGDEB() << Q_FUNC_INFO;
 	m_lineBuffer.append(ScreenLine());
 	if(move_cursor) {
-		m_currentPosition.setX(0);
+		m_cursorPosition.setX(0);
 		int new_y = qMin(rowCount(), m_terminalSize.height()) - 1;
 		if(new_y < 0)
 			new_y = 0;
-		m_currentPosition.setY(new_y);
+		m_cursorPosition.setY(new_y);
 	}
 }
 

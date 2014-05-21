@@ -169,14 +169,47 @@ void TerminalWidget::setupGeometry()
 
 void TerminalWidget::keyPressEvent(QKeyEvent *ev)
 {
-	LOGDEB() << __FUNCTION__ << ev->text();
-	QString text = ev->text();
-	bool is_accepted = false;
+	LOGDEB() << __FUNCTION__ << ev->text() << ev->text().toLatin1().toHex();
+	bool is_accepted = true;
 	core::term::SlavePtyProcess *pty = m_terminal->slavePtyProcess();
-	if(!text.isEmpty()) {
-		//QChar c = text[0];
-		pty->write(text.toUtf8());
-		is_accepted = true;
+	switch(ev->key()) {
+		//case Qt::Key_CapsLock:
+		//case Qt::Key_Shift:
+		//    break;
+		case Qt::Key_Return:
+		case Qt::Key_Enter:
+			pty->write("\n", 1 );
+			break;
+		case Qt::Key_Backspace:
+			pty->write("\b", 1 );
+			break;
+		case Qt::Key_Tab:
+			pty->write("\t", 1 );
+			break;
+		case Qt::Key_Escape:
+			pty->write("\x1b", 1 );
+			break;
+		case Qt::Key_Up:
+			pty->write("\x1b[A", 3 );
+			break;
+		case Qt::Key_Down:
+			pty->write("\x1b[B", 3 );
+			break;
+		case Qt::Key_Right:
+			pty->write("\x1b[C", 3 );
+			break;
+		case Qt::Key_Left:
+			pty->write("\x1b[D", 3 );
+			break;
+		default:
+			is_accepted = false;
+			QString text = ev->text();
+			if(!text.isEmpty()) {
+				//QChar c = text[0];
+				pty->write(text.toUtf8());
+				is_accepted = true;
+			}
+			break;
 	}
 	if(is_accepted)
 		ev->accept();
