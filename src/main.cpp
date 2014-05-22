@@ -21,16 +21,28 @@
 #warning "no **********************debug"
 #endif
 */
+
 int main(int argc, char *argv[])
 {
 	int fd;
 	char slave_pty_name[128];
+	/*
+	int pipefd[2];
+	if( ::pipe( pipefd ) ) {
+		perror("pipe");
+		return 1;
+	}
+	*/
 	pid_t pid = forkpty(&fd, slave_pty_name, NULL, NULL);
 	if (pid == -1) {
 		perror("forkpty");
 		return 1;
 	}
 	else if (pid == 0) {
+		// child
+		//::close(pipefd[0] );
+		//::fcntl(pipefd[1], F_SETFD, FD_CLOEXEC);
+
 		//setenv("TERM", "vt100", 1);
 		setenv("TERM", "xterm", 1);
 		if (execlp("/bin/sh", "sh", (void*)0) == -1) {

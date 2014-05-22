@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
+#include <QWidget>
 
 namespace Ui {
 class MainWindow;
@@ -16,7 +16,7 @@ class Terminal;
 namespace gui {
 namespace qt {
 
-class MainWindow : public QMainWindow
+class MainWindow : public QWidget
 {
     Q_OBJECT
 public:
@@ -24,7 +24,12 @@ public:
     ~MainWindow();
 private slots:
 	void on_actQuit_triggered();
-	void on_edCommand_returnPressed();
+	void on_btTab_clicked();
+	void on_btUp_clicked();
+	void on_btDown_clicked();
+	void on_btLeft_clicked();
+	void on_btRight_clicked();
+	//void on_edCommand_returnPressed();
 private:
     Ui::MainWindow *ui;
 	core::term::Terminal *m_terminal;

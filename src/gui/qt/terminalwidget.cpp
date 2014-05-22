@@ -178,28 +178,28 @@ void TerminalWidget::keyPressEvent(QKeyEvent *ev)
 		//    break;
 		case Qt::Key_Return:
 		case Qt::Key_Enter:
-			pty->write("\n", 1 );
+			pty->write("\n", 1);
 			break;
 		case Qt::Key_Backspace:
-			pty->write("\b", 1 );
+			sendKeyBackspace();
 			break;
 		case Qt::Key_Tab:
-			pty->write("\t", 1 );
+			sendKeyTab();
 			break;
 		case Qt::Key_Escape:
-			pty->write("\x1b", 1 );
+			pty->write("\x1b", 1);
 			break;
 		case Qt::Key_Up:
-			pty->write("\x1b[A", 3 );
+			sendKeyUp();
 			break;
 		case Qt::Key_Down:
-			pty->write("\x1b[B", 3 );
+			sendKeyDown();
 			break;
 		case Qt::Key_Right:
-			pty->write("\x1b[C", 3 );
+			sendKeyRight();
 			break;
 		case Qt::Key_Left:
-			pty->write("\x1b[D", 3 );
+			sendKeyLeft();
 			break;
 		default:
 			is_accepted = false;
@@ -213,6 +213,12 @@ void TerminalWidget::keyPressEvent(QKeyEvent *ev)
 	}
 	if(is_accepted)
 		ev->accept();
+}
+
+qint64 TerminalWidget::sendKey(const char *sequence, int length)
+{
+	core::term::SlavePtyProcess *pty = m_terminal->slavePtyProcess();
+	return pty->write(sequence, length);
 }
 
 

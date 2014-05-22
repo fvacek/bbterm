@@ -27,6 +27,11 @@ SlavePtyProcess::SlavePtyProcess(int master_fd, pid_t pid, QObject *parent)
 		//ttmode.c_iflag |= IUTF8;
 		ttmode.c_cc[VERASE] = '\x08';
 
+		// We want to disable the canonical mode
+		//ttmode.c_lflag &= ~ICANON;
+		// We want to enable the canonical mode
+		ttmode.c_lflag |= ICANON;
+
 		if (!tcsetattr(m_masterFd, TCSANOW, &ttmode))
 			qWarning() << "Unable to set terminal attributes.";
 	}

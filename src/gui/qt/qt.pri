@@ -11,3 +11,12 @@ HEADERS  += \
 FORMS += \
 	$$PWD/mainwindow.ui \
 
+blackberry {
+	HEADERS += \
+		$$PWD/bbvirtualkeyboardhandler.h \
+		$$PWD/bbvirtualkeyboardwidget.h \
+
+	SOURCES += \
+		$$PWD/bbvirtualkeyboardhandler.cpp \
+		$$PWD/bbvirtualkeyboardwidget.cpp \
+}

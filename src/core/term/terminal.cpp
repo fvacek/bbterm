@@ -6,6 +6,7 @@
 //#define NO_BBTERM_LOG_DEBUG
 #include <core/util/log.h>
 
+#include <QApplication>
 #include <QDebug>
 
 using namespace core::term;
@@ -41,6 +42,14 @@ void Terminal::onPtyProcessReadyRead()
 	LOGDEB() << ba.toHex();
 	LOGDEB() << "$$$$$$$$$$$$$$$$$$$$$$";
 	*/
-	QString s = QString::fromUtf8(ba);
-	m_screenBuffer->processInput(s);
+	if(ba.length() == 0) {
+		// slave process finished ???
+		qDebug() << "zero bytes read slave process finished ???";
+		qDebug() << "Quitting the application";
+		QApplication::quit();
+	}
+	else {
+		QString s = QString::fromUtf8(ba);
+		m_screenBuffer->processInput(s);
+	}
 }
