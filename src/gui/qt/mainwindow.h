@@ -29,7 +29,7 @@ private slots:
 	void on_btDown_clicked();
 	void on_btLeft_clicked();
 	void on_btRight_clicked();
-	//void on_edCommand_returnPressed();
+	void on_btVKB_clicked(bool checked);
 private:
     Ui::MainWindow *ui;
 	core::term::Terminal *m_terminal;

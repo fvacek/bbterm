@@ -5,7 +5,7 @@
 #include <QStringList>
 #include <QDebug>
 
-#define DEBUG_ESCAPES_PROCESSING
+//#define DEBUG_ESCAPES_PROCESSING
 #ifdef DEBUG_ESCAPES_PROCESSING
 #define ESC_DEBUG() qDebug() << "<CTL>" << __FUNCTION__ << "captions:" << params.join(" - ")
 #define ESC_DEBUG_IGNORED() qDebug() << "<CTL IGNORED>" << __FUNCTION__ << "captions:" << params.join(" - ")
@@ -285,14 +285,14 @@ void ScreenBuffer::cmdBackSpace(const QStringList &params)
 		if(m_cursorPosition.y() < 0)
 			m_cursorPosition.ry() = 0;
 	}
+	#ifdef BACKSPACE_DELETES
 	int row = firstVisibleLineIndex() + m_cursorPosition.y();
 	if(row < rowCount()) {
 		ScreenLine &line = m_lineBuffer.at(row);
 		ScreenCell &cell = line.cellAt(m_cursorPosition.x());
 		cell.setLetter(QChar());
-		//cell.setColor(ScreenCell::ColorWhite, ScreenCell::ColorBlack);
-		//cell.setAttributes(ScreenCell::AttrReset);
 	}
+	#endif
 }
 
 void ScreenBuffer::cmdSetCharAttributes(const QStringList &params)

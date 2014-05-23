@@ -1,5 +1,7 @@
 #include "bbvirtualkeyboardhandler.h"
 
+#include <core/util/log.h>
+
 #include <bps/virtualkeyboard.h>
 #include <bps/navigator.h>
 
@@ -14,9 +16,10 @@ QAbstractEventDispatcher::EventFilter BBVirtualKeyboardHandler::m_prevEventFilte
 BBVirtualKeyboardHandler::BBVirtualKeyboardHandler(QObject *parent) :
 	QObject(parent)
 {
+	//m_keyboardShownCount = 0;
 	virtualkeyboard_request_events(0);
 	navigator_request_events(0);
-	virtualkeyboard_show();
+	//setKeyboardVisible(true);
 	m_prevEventFilter = QAbstractEventDispatcher::instance()->setEventFilter(eventFilter);
 }
 
@@ -25,6 +28,15 @@ BBVirtualKeyboardHandler *BBVirtualKeyboardHandler::instance()
 	// thread safe with C++11, see http://en.wikipedia.org/wiki/Double-checked_locking
 	static BBVirtualKeyboardHandler i;
 	return &i;
+}
+
+void BBVirtualKeyboardHandler::setKeyboardVisible(bool b)
+{
+	LOGDEB() << Q_FUNC_INFO << b;
+	if(b)
+		virtualkeyboard_show();
+	else
+		virtualkeyboard_hide();
 }
 
 int BBVirtualKeyboardHandler::keyboardHeight()
@@ -42,20 +54,27 @@ bool BBVirtualKeyboardHandler::eventFilter(void *message)
 		if (bps_event_get_domain(event) == virtualkeyboard_get_domain()) {
 			const int id = bps_event_get_code(event);
 			switch( id ) {
-			case VIRTUALKEYBOARD_EVENT_VISIBLE:
-				qDebug() << "Keyboard visible";
-				instance()->setKeyboardVisible(true);
+			case VIRTUALKEYBOARD_EVENT_VISIBLE: {
+				LOGDEB() << "Keyboard visible";
+				BBVirtualKeyboardHandler *hi = BBVirtualKeyboardHandler::instance();
+				//hi->m_keyboardShownCount++;
+				hi->m_keyboardVisible = true;
+				emit hi->keyboardVisibleChanged(true);
 				break;
-			case VIRTUALKEYBOARD_EVENT_HIDDEN:
-				qDebug() << "Keyboard hidden";
-				instance()->setKeyboardVisible(false);
+			}
+			case VIRTUALKEYBOARD_EVENT_HIDDEN: {
+				LOGDEB() << "Keyboard hidden";
+				BBVirtualKeyboardHandler *hi = BBVirtualKeyboardHandler::instance();
+				hi->m_keyboardVisible = false;
+				hi->keyboardVisibleChanged(false);
 				break;
+			}
 			case VIRTUALKEYBOARD_EVENT_INFO:
-				qDebug() << "Keyboard event";
+				LOGDEB() << "Keyboard event";
 				//instance()->resize();
 				break;
 			default:
-				qDebug() << "Unexpected keyboard event:" << id;
+				LOGDEB() << "Unexpected keyboard event:" << id;
 				break;
 			}
 		} else if( bps_event_get_domain(event) == navigator_get_domain()) {
@@ -63,7 +82,7 @@ bool BBVirtualKeyboardHandler::eventFilter(void *message)
 			switch( id ) {
 			case NAVIGATOR_SWIPE_DOWN:
 			{
-				qDebug() << "NAVIGATOR_SWIPE_DOWN not handled";
+				LOGDEB() << "NAVIGATOR_SWIPE_DOWN not handled";
 				/*
 				virtualkeyboard_hide();
 				QDialog dialog;

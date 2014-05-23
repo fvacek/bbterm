@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/gui/qt">
+	    <file>images/vkb.png</file>
+    </qresource>
+</RCC>

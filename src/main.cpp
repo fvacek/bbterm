@@ -24,6 +24,24 @@
 
 int main(int argc, char *argv[])
 {
+	QString shell_path;
+	for(int i=1; i<argc; i++) {
+		QString arg = argv[i];
+		if(arg == "--shell") {
+			i++;
+			if(i < argc) {
+				shell_path = argv[i];
+			}
+		}
+	}
+	if(shell_path.isEmpty()) {
+		// check SHELL env var
+		shell_path = ::getenv("SHELL");
+	}
+	if(shell_path.isEmpty()) {
+		shell_path = "/bin/sh";
+	}
+
 	int fd;
 	char slave_pty_name[128];
 	/*
@@ -33,6 +51,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	*/
+	qDebug() << "exec shell:" << shell_path;
 	pid_t pid = forkpty(&fd, slave_pty_name, NULL, NULL);
 	if (pid == -1) {
 		perror("forkpty");
@@ -45,7 +64,9 @@ int main(int argc, char *argv[])
 
 		//setenv("TERM", "vt100", 1);
 		setenv("TERM", "xterm", 1);
-		if (execlp("/bin/sh", "sh", (void*)0) == -1) {
+		QByteArray a1 = shell_path.toLatin1();
+		QByteArray a2 = shell_path.section('/', -1).toLatin1();
+		if (execlp(a1.constData(), a2.constData(), (void*)0) == -1) {
 		//if (execlp("cat", "cat", (void*)0) == -1) {
 			perror("execlp");
 		}
@@ -58,23 +79,7 @@ int main(int argc, char *argv[])
 
 	int flags = ::fcntl(fd, F_GETFL, 0);
 	::fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-	/*
-	const char* cmd = "ls -l /\n";
-	if (write(fd, cmd, strlen(cmd)) == -1) {
-		perror("write");
-		return 1;
-	}
 
-	char buf[255];
-	int nread;
-	while ((nread = read(fd, buf, 254)) > 0) {
-		int i;
-		for (i = 0; i < nread; i++) {
-			putchar(buf[i]);
-		}
-	}
-	printf("Done\n");
-	*/
 	QApplication a(argc, argv);
 	core::term::SlavePtyProcess slave_pty_process(fd, pid);
 	if(!slave_pty_process.open(QIODevice::ReadWrite)) {

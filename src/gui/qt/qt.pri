@@ -20,3 +20,6 @@ blackberry {
 		$$PWD/bbvirtualkeyboardhandler.cpp \
 		$$PWD/bbvirtualkeyboardwidget.cpp \
 }
+
+RESOURCES += \
+    $$PWD/qui-qt.qrc

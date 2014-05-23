@@ -13,6 +13,8 @@ public:
 	explicit BBVirtualKeyboardWidget(QWidget *parent = 0);
 public:
 	Q_SLOT void onVKBVisibleChanged(bool visible);
+private:
+	Q_SLOT void lazyInit();
 };
 
 }

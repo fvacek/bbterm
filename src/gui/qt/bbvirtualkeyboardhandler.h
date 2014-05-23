@@ -17,12 +17,13 @@ public:
 	static BBVirtualKeyboardHandler* instance();
 
 	bool isKeyboardVisible() const {return m_keyboardVisible;}
-	void setKeyboardVisible(bool b) {m_keyboardVisible = b; emit keyboardVisibleChanged(m_keyboardVisible);}
+	Q_SLOT void setKeyboardVisible(bool b);
 	Q_SIGNAL void keyboardVisibleChanged(bool visible);
 
 	int keyboardHeight();
 private:
 	bool m_keyboardVisible;
+	//int m_keyboardShownCount;
 	static bool eventFilter(void *message);
 	static QAbstractEventDispatcher::EventFilter m_prevEventFilter;
 };

@@ -43,14 +43,23 @@ QSize ScreenBuffer::terminalSize()
 
 void ScreenBuffer::setTerminalSize(const QSize &cols_rows)
 {
+	LOGDEB() << Q_FUNC_INFO << "from" << terminalSize().width() << terminalSize().height() << "to" << cols_rows.width() << cols_rows.height();
+	LOGDEB() << "old cursor y:" << m_cursorPosition.y();
+	int ix0 = firstVisibleLineIndex();
 	m_terminalSize = cols_rows;
 	m_slavePtyProcess->setSize(cols_rows.width(), cols_rows.height());
+	int delta = ix0 - firstVisibleLineIndex();
+	m_cursorPosition.ry() += delta;
+	if(m_cursorPosition.y() < 0) m_cursorPosition.setY(0);
+	if(m_cursorPosition.y() >= terminalSize().height()) m_cursorPosition.setY(terminalSize().height() - 1);
+	LOGDEB() << "new cursor y:" << m_cursorPosition.y();
 }
 
 int ScreenBuffer::firstVisibleLineIndex() const
 {
 	int start_ix = rowCount() - m_terminalSize.height();
-	if(start_ix < 0) start_ix = 0;
+	if(start_ix < 0)
+		start_ix = 0;
 	return start_ix;
 }
 
@@ -59,7 +68,7 @@ int ScreenBuffer::firstVisibleLineIndex() const
 void ScreenBuffer::processInput(const QString &input)
 {
 	m_inputBuffer += input;
-	LOGDEB() << "processing input:" << input;
+	//LOGDEB() << "processing input:" << input;
 	int consumed = 0;
 	QRect dirty_rect;
 	//QString line_to_print_debug;
@@ -70,7 +79,7 @@ void ScreenBuffer::processInput(const QString &input)
 			//line_to_print_debug += c;
 			int ix = firstVisibleLineIndex() + m_cursorPosition.y();
 			if(ix >= rowCount()) {
-				qCritical() << "attempt to write on not existing line index" << ix << "of" << rowCount();
+				LOGERR() << "attempt to write on not existing line index" << ix << "of" << rowCount();
 			}
 			else {
 				ScreenLine &line = m_lineBuffer.at(ix);
@@ -81,13 +90,20 @@ void ScreenBuffer::processInput(const QString &input)
 			}
 			// advance cursor to next position
 			m_cursorPosition.rx()++;
+			#ifdef AUTO_LINE_FEED
+			// it seems that shell handle auto line feed itself
 			if(m_cursorPosition.x() >= terminalSize().width()) {
 				m_cursorPosition.setX(0);
-				m_cursorPosition.ry()++;
-				while(m_cursorPosition.y() + firstVisibleLineIndex() >= rowCount()) {
-						appendLine(false);
+				qDebug() << "line wrap - firstVisibleLineIndex:" << firstVisibleLineIndex() << "cursor:" << m_cursorPosition.x() << m_cursorPosition.y() << "terminal size:" << terminalSize().width() << terminalSize().height();
+				appendLine(false);
+				if(m_cursorPosition.y() < (terminalSize().height() - 1)) {
+					//qDebug() << "not last terminal line";
+					m_cursorPosition.ry()++;
 				}
+				//qDebug() << "line appended - firstVisibleLineIndex:" << firstVisibleLineIndex() << "cursor.y:" << m_cursorPosition.y() << "terminal height:" << terminalSize().height();
+				//while(m_cursorPosition.y() + firstVisibleLineIndex() >= rowCount())
 			}
+			#endif
 			consumed++;
 		}
 		else {

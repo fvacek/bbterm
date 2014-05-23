@@ -1,5 +1,7 @@
 #include "slaveptyprocess.h"
 
+#include <core/util/log.h>
+
 #include <QSocketNotifier>
 #include <QDebug>
 
@@ -32,8 +34,9 @@ SlavePtyProcess::SlavePtyProcess(int master_fd, pid_t pid, QObject *parent)
 		// We want to enable the canonical mode
 		ttmode.c_lflag |= ICANON;
 
-		if (!tcsetattr(m_masterFd, TCSANOW, &ttmode))
-			qWarning() << "Unable to set terminal attributes.";
+		if (-1 == ::tcsetattr(m_masterFd, TCSANOW, &ttmode)) {
+			LOGERR() << "Unable to set terminal attributes:" << ::strerror(errno);
+		}
 	}
 	m_readNotifier = new QSocketNotifier(m_masterFd, QSocketNotifier::Read, this);
 	connect(m_readNotifier, SIGNAL(activated(int)), this, SIGNAL(readyRead()));
@@ -66,6 +69,7 @@ void SlavePtyProcess::setSize(int cols, int rows)
 	}
 }
 
+#define LOG_READ_WRITE
 qint64 SlavePtyProcess::readData(char *data, qint64 max_size)
 {
 	//qDebug() << Q_FUNC_INFO;
@@ -73,7 +77,9 @@ qint64 SlavePtyProcess::readData(char *data, qint64 max_size)
 	qint64 ret = ::read(m_masterFd, data, max_size);
 	if(ret > 0) {
 		QByteArray ba(data, ret);
-		qDebug() << ret << "bytes read" << ba << "HEX:" << ba.toHex();
+#ifdef LOG_READ_WRITE
+		qDebug() << __FUNCTION__ << ret << "bytes read" << ba << "HEX:" << ba.toHex();
+#endif
 	}
 	m_readNotifier->setEnabled(true);
 	return ret;
@@ -81,14 +87,16 @@ qint64 SlavePtyProcess::readData(char *data, qint64 max_size)
 
 qint64 SlavePtyProcess::writeData(const char *data, qint64 max_size)
 {
-	qDebug() << Q_FUNC_INFO;
+	//qDebug() << Q_FUNC_INFO;
 	qint64 ret = ::write(m_masterFd, data, max_size);
 	if(ret > 0) {
 		QByteArray ba(data, ret);
-		qDebug() << ret << "bytes written" << ba << "HEX:" << ba.toHex();
+#ifdef LOG_READ_WRITE
+		qDebug() << __FUNCTION__ << ret << "bytes written" << ba << "HEX:" << ba.toHex();
+#endif
 	}
 	if(ret < 0) {
-		QString s = QString::fromUtf8(strerror(errno));
+		QString s = QString::fromUtf8(::strerror(errno));
 		qWarning() << "error write data to" << m_masterFd << ":" << s;
 	}
 	return ret;

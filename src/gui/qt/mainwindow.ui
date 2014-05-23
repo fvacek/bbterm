@@ -111,6 +111,26 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QPushButton" name="btVKB">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="icon">
+          <iconset resource="qui-qt.qrc">
+           <normaloff>:/gui/qt/images/vkb.png</normaloff>:/gui/qt/images/vkb.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>32</width>
+           <height>16</height>
+          </size>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
     </layout>
@@ -134,6 +154,8 @@
  <tabstops>
   <tabstop>terminalWidget</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="qui-qt.qrc"/>
+ </resources>
  <connections/>
 </ui>

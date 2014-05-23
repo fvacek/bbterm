@@ -6,6 +6,7 @@
 #include <QWidget>
 #include <QFont>
 #include <QResizeEvent>
+#include <QElapsedTimer>
 
 namespace core {
 namespace term {
@@ -35,6 +36,13 @@ protected:
 	void paintEvent(QPaintEvent *ev) Q_DECL_OVERRIDE;
 	void resizeEvent(QResizeEvent *ev) Q_DECL_OVERRIDE;
 	void keyPressEvent(QKeyEvent *ev) Q_DECL_OVERRIDE;
+	void wheelEvent(QWheelEvent *ev) Q_DECL_OVERRIDE;
+	//void mouseMoveEvent ( QMouseEvent * event ) Q_DECL_OVERRIDE;
+	//void mousePressEvent ( QMouseEvent * event ) Q_DECL_OVERRIDE;
+	//void mouseReleaseEvent ( QMouseEvent * event ) Q_DECL_OVERRIDE;
+	bool event(QEvent *ev) Q_DECL_OVERRIDE;
+private:
+	bool gestureEvent(QGestureEvent *ev);
 private:
 	void setupGeometry();
 	void setupFont(int point_size);
@@ -42,7 +50,10 @@ private:
 	QBrush brushForCell(const core::term::ScreenCell &cell);
 	void paintText(QPainter *painter, const QPoint &term_pos, const QString &text, const core::term::ScreenCell &text_attrs);
 
+	void addHistoryLinesOffset(int offset);
+
 	Q_SLOT void invalidateRegion(const QRect &dirty_rect);
+	void invalidateAll();
 
 	qint64 sendKey(const char *sequence, int length);
 private:
@@ -52,6 +63,9 @@ private:
 	int m_charHeightPx;
 	int m_charShiftPx;
 	Palette m_palete;
+	int m_historyLinesOffset;
+	QPoint m_swipeStartPosition;
+	QElapsedTimer m_swipeSpeedTimer;
 };
 
 }

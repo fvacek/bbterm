@@ -4,6 +4,7 @@
 #include <core/term/terminal.h>
 
 #ifdef Q_OS_BLACKBERRY
+#include "bbvirtualkeyboardhandler.h"
 #include "bbvirtualkeyboardwidget.h"
 #endif
 
@@ -21,6 +22,7 @@ MainWindow::MainWindow(core::term::SlavePtyProcess *pty_process, QWidget *parent
 	#ifdef Q_OS_BLACKBERRY
 	ui->mainLayout->addWidget(new BBVirtualKeyboardWidget(this));
 	#else
+	ui->btVKB->hide();
 	resize(800, 700);
 	#endif
 }
@@ -58,6 +60,13 @@ void MainWindow::on_btLeft_clicked()
 void MainWindow::on_btRight_clicked()
 {
 	ui->terminalWidget->sendKeyRight();
+}
+
+void MainWindow::on_btVKB_clicked(bool checked)
+{
+	#ifdef Q_OS_BLACKBERRY
+	BBVirtualKeyboardHandler::instance()->setKeyboardVisible(checked);
+	#endif
 }
 /*
 void MainWindow::on_edCommand_returnPressed()

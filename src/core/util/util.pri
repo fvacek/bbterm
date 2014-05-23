@@ -2,4 +2,5 @@ HEADERS += \
 	$$PWD/log.h \
 	$$PWD/ringbuffer.h \
 
-SOURCES +=
+SOURCES += \
+    $$PWD/log.cpp
