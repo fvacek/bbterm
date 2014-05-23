@@ -4,6 +4,8 @@
 
 #include <bps/virtualkeyboard.h>
 #include <bps/navigator.h>
+#include <bps/orientation.h>
+#include <bps/screen.h>
 
 #include <QMutex>
 #include <QMutexLocker>
@@ -51,8 +53,10 @@ bool BBVirtualKeyboardHandler::eventFilter(void *message)
 	bps_event_t * const event = static_cast<bps_event_t *>(message);
 
 	if (event && BBVirtualKeyboardHandler::instance()) {
+		LOGDEB() << "BPS event , domain:" << bps_event_get_domain(event) << "code:" << bps_event_get_code(event);
 		if (bps_event_get_domain(event) == virtualkeyboard_get_domain()) {
 			const int id = bps_event_get_code(event);
+			LOGDEB() << QString("KEYBOARD event: %1 0x%2").arg(id).arg(id, 2, 16, QChar('0'));
 			switch( id ) {
 			case VIRTUALKEYBOARD_EVENT_VISIBLE: {
 				LOGDEB() << "Keyboard visible";
@@ -69,17 +73,33 @@ bool BBVirtualKeyboardHandler::eventFilter(void *message)
 				hi->keyboardVisibleChanged(false);
 				break;
 			}
-			case VIRTUALKEYBOARD_EVENT_INFO:
-				LOGDEB() << "Keyboard event";
-				//instance()->resize();
+			case VIRTUALKEYBOARD_EVENT_INFO: {
+				LOGDEB() << "Keyboard info event";
+				BBVirtualKeyboardHandler *hi = BBVirtualKeyboardHandler::instance();
+				emit hi->keyboardLayoutChanged();
 				break;
+			}
 			default:
 				LOGDEB() << "Unexpected keyboard event:" << id;
 				break;
 			}
-		} else if( bps_event_get_domain(event) == navigator_get_domain()) {
+		}
+		else if( bps_event_get_domain(event) == navigator_get_domain()) {
 			const int id = bps_event_get_code(event);
+			LOGDEB() << QString("NAVIGATOR event: %1 0x%2").arg(id).arg(id, 2, 16, QChar('0'));
 			switch( id ) {
+			case NAVIGATOR_WINDOW_ACTIVE: {
+				LOGDEB() << "NAVIGATOR_WINDOW_ACTIVE";
+				BBVirtualKeyboardHandler *hi = BBVirtualKeyboardHandler::instance();
+				emit hi->windowActiveChanged(true);
+				break;
+			}
+			case NAVIGATOR_WINDOW_INACTIVE: {
+				LOGDEB() << "NAVIGATOR_WINDOW_INACTIVE";
+				BBVirtualKeyboardHandler *hi = BBVirtualKeyboardHandler::instance();
+				emit hi->windowActiveChanged(false);
+				break;
+			}
 			case NAVIGATOR_SWIPE_DOWN:
 			{
 				LOGDEB() << "NAVIGATOR_SWIPE_DOWN not handled";
@@ -107,6 +127,14 @@ bool BBVirtualKeyboardHandler::eventFilter(void *message)
 			}
 				break;
 			}
+		}
+		else if( bps_event_get_domain(event) == orientation_get_domain()) {
+			//const int id = bps_event_get_code(event);
+			//LOGDEB() << QString("ORIENTATION event: %1 0x%2").arg(id).arg(id, 2, 16, QChar('0'));
+		}
+		else if( bps_event_get_domain(event) == screen_get_domain()) {
+			//const int id = bps_event_get_code(event);
+			//LOGDEB() << QString("SCREEN event: %1 0x%2").arg(id).arg(id, 2, 16, QChar('0'));
 		}
 	}
 

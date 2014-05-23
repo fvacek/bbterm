@@ -30,6 +30,7 @@ private slots:
 	void on_btLeft_clicked();
 	void on_btRight_clicked();
 	void on_btVKB_clicked(bool checked);
+	void onVkbVisibleCchanged(bool visible);
 private:
     Ui::MainWindow *ui;
 	core::term::Terminal *m_terminal;

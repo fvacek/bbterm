@@ -3,6 +3,9 @@
 #include <core/term/screenbuffer.h>
 #include <core/term/slaveptyprocess.h>
 #include <core/term/terminal.h>
+#ifdef Q_OS_BLACKBERRY
+#include "bbvirtualkeyboardhandler.h"
+#endif
 
 #include <QPainter>
 #include <QColor>
@@ -14,7 +17,7 @@
 using namespace gui::qt;
 
 TerminalWidget::TerminalWidget(QWidget *parent)
-: QWidget(parent), m_historyLinesOffset(0)
+: QWidget(parent), m_historyLinesOffset(0), m_horizontalScrollPx(0)
 {
 	setupFont(8);
 #ifdef Q_OS_BLACKBERRY
@@ -27,6 +30,7 @@ void TerminalWidget::setupFont(int point_size)
 {
 #ifdef Q_OS_BLACKBERRY
 		m_font = QFont("Andale Mono");
+		connect(BBVirtualKeyboardHandler::instance(), SIGNAL(keyboardVisibleChanged(bool)), this, SLOT(updateFocus(bool)));
 #else
 		m_font = QFont();
 		m_font.setStyleHint(QFont::Monospace);
@@ -62,6 +66,14 @@ void TerminalWidget::invalidateAll()
 {
 	core::term::ScreenBuffer *screen_buffer = m_terminal->screenBuffer();
 	invalidateRegion(QRect(QPoint(0, 0), screen_buffer->terminalSize()));
+}
+
+void TerminalWidget::updateFocus(bool activate)
+{
+	LOGDEB() << Q_FUNC_INFO << activate;
+	if(activate) {
+		setFocus();
+	}
 }
 
 void TerminalWidget::setTerminal(core::term::Terminal *t)
@@ -135,7 +147,7 @@ void TerminalWidget::paintEvent(QPaintEvent *ev)
 
 void TerminalWidget::paintText(QPainter *painter, const QPoint &term_pos, const QString &text, const core::term::ScreenCell &text_attrs)
 {
-	int px_x = term_pos.x() * m_charWidthPx;
+	int px_x = term_pos.x() * m_charWidthPx - m_horizontalScrollPx;
 	int px_y = term_pos.y() * m_charHeightPx;
 	//LOGDEB() << term_pos.x() << term_pos.y() << text;
 	QRect r(px_x, px_y, text.length() * m_charWidthPx, m_charHeightPx);
@@ -225,8 +237,7 @@ void TerminalWidget::keyPressEvent(QKeyEvent *ev)
 	}
 	if(is_accepted) {
 		ev->accept();
-		m_historyLinesOffset = 0;
-		invalidateAll();
+		resetHistoryLinesOffset();
 	}
 }
 
@@ -234,6 +245,18 @@ qint64 TerminalWidget::sendKey(const char *sequence, int length)
 {
 	core::term::SlavePtyProcess *pty = m_terminal->slavePtyProcess();
 	return pty->write(sequence, length);
+}
+
+void TerminalWidget::scrollBy(int x_pixels, int y_lines)
+{
+	int old_x = m_horizontalScrollPx;
+	int old_ofset = m_historyLinesOffset;
+	m_horizontalScrollPx -= x_pixels;
+	if(m_horizontalScrollPx < 0) m_horizontalScrollPx = 0;
+	addHistoryLinesOffset(y_lines);
+	if(m_historyLinesOffset != old_ofset || old_x != m_horizontalScrollPx) {
+		invalidateAll();
+	}
 }
 
 void TerminalWidget::addHistoryLinesOffset(int offset)
@@ -248,6 +271,12 @@ void TerminalWidget::addHistoryLinesOffset(int offset)
 	if(m_historyLinesOffset < 0) {
 		m_historyLinesOffset = 0;
 	}
+}
+
+void TerminalWidget::resetHistoryLinesOffset()
+{
+	m_horizontalScrollPx = 0;
+	m_historyLinesOffset = 0;
 	invalidateAll();
 }
 
@@ -258,36 +287,44 @@ void TerminalWidget::wheelEvent(QWheelEvent *ev)
 	// delta 120 == 15 degrees
 	// let delta 120 scrolls terminal by 3 lines
 	int num_lines = ev->delta() / 40;
-	addHistoryLinesOffset(num_lines);
+	scrollBy(0, num_lines);
 	if(is_accepted)
 		ev->accept();
 }
 
 bool TerminalWidget::event(QEvent *ev)
 {
-	LOGDEB() << Q_FUNC_INFO << ev->type();
+	//LOGDEB() << Q_FUNC_INFO << ev->type();
 	bool ret = true;
 	if (ev->type() == QEvent::Gesture) {
 		ret = gestureEvent(static_cast<QGestureEvent*>(ev));
 	}
 	else if(ev->type() == QEvent::MouseButtonPress) {
+		//LOGDEB() << "MouseButtonPress";
 		QMouseEvent *event = static_cast<QMouseEvent*>(ev);
 		m_swipeStartPosition = event->pos();
-		m_swipeSpeedTimer.start();
+		//m_swipeSpeedTimer.start();
 	}
 	else if(ev->type() == QEvent::MouseMove) {
 		QMouseEvent *event = static_cast<QMouseEvent*>(ev);
 		if(!m_swipeStartPosition.isNull()) {
 			QPoint end_pos = event->pos();
-			int delta_px = end_pos.y() - m_swipeStartPosition.y();
+			int delta_x_px = end_pos.x() - m_swipeStartPosition.x();
+			int delta_y_px = end_pos.y() - m_swipeStartPosition.y();
 			/*
 			int tm_ms = m_swipeSpeedTimer.elapsed();
 			double velocity = delta_px / (double)tm_ms;
 			LOGDEB() << "delta;" << delta_px << "time:" << tm_ms << "vel:" << velocity;
 			*/
-			int lines = size().height();
+			core::term::ScreenBuffer *screen_buffer = m_terminal->screenBuffer();
+			int lines = delta_y_px * screen_buffer->terminalSize().height() / size().height();
+			static const int HORIZONTAL_SCROLL_TRESHOLD = 50;
+			if(lines != 0 || delta_x_px > HORIZONTAL_SCROLL_TRESHOLD || delta_x_px < -HORIZONTAL_SCROLL_TRESHOLD) {
+				//LOGDEB() << "MouseMove" << "delta:" << delta_px << "lines:" << lines;
+				scrollBy(delta_x_px, lines);
+				m_swipeStartPosition = end_pos;
+			}
 		}
-		m_swipeStartPosition = QPoint();
 	}
 	else if(ev->type() == QEvent::MouseButtonRelease) {
 	}
@@ -307,7 +344,7 @@ bool TerminalWidget::gestureEvent(QGestureEvent *ev)
 			core::term::ScreenBuffer *screen_buffer = m_terminal->screenBuffer();
 			int delta = screen_buffer->terminalSize().height();
 			if (swipe_gesture->verticalDirection() == QSwipeGesture::Up) delta = -delta;
-			addHistoryLinesOffset(delta);
+			scrollBy(0, delta);
 		}
 	}
 	return ret;

@@ -19,6 +19,9 @@ public:
 	bool isKeyboardVisible() const {return m_keyboardVisible;}
 	Q_SLOT void setKeyboardVisible(bool b);
 	Q_SIGNAL void keyboardVisibleChanged(bool visible);
+	Q_SIGNAL void keyboardLayoutChanged();
+
+	Q_SIGNAL void windowActiveChanged(bool window_active);
 
 	int keyboardHeight();
 private:

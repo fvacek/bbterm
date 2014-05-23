@@ -21,6 +21,7 @@ MainWindow::MainWindow(core::term::SlavePtyProcess *pty_process, QWidget *parent
 	ui->terminalWidget->setTerminal(m_terminal);
 	#ifdef Q_OS_BLACKBERRY
 	ui->mainLayout->addWidget(new BBVirtualKeyboardWidget(this));
+	connect(BBVirtualKeyboardHandler::instance(), SIGNAL(keyboardVisibleChanged(bool)), this, SLOT(onVkbVisibleCchanged(bool)));
 	#else
 	ui->btVKB->hide();
 	resize(800, 700);
@@ -39,34 +40,39 @@ void MainWindow::on_actQuit_triggered()
 
 void MainWindow::on_btTab_clicked()
 {
-	ui->terminalWidget->sendKeyTab();
+	ui->terminalWidget->pushKeyTab();
 }
 
 void MainWindow::on_btUp_clicked()
 {
-	ui->terminalWidget->sendKeyUp();
+	ui->terminalWidget->pushKeyUp();
 }
 
 void MainWindow::on_btDown_clicked()
 {
-	ui->terminalWidget->sendKeyDown();
+	ui->terminalWidget->pushKeyDown();
 }
 
 void MainWindow::on_btLeft_clicked()
 {
-	ui->terminalWidget->sendKeyLeft();
+	ui->terminalWidget->pushKeyLeft();
 }
 
 void MainWindow::on_btRight_clicked()
 {
-	ui->terminalWidget->sendKeyRight();
+	ui->terminalWidget->pushKeyRight();
 }
 
 void MainWindow::on_btVKB_clicked(bool checked)
 {
-	#ifdef Q_OS_BLACKBERRY
+#ifdef Q_OS_BLACKBERRY
 	BBVirtualKeyboardHandler::instance()->setKeyboardVisible(checked);
-	#endif
+#endif
+}
+
+void MainWindow::onVkbVisibleCchanged(bool visible)
+{
+	ui->btVKB->setChecked(visible);
 }
 /*
 void MainWindow::on_edCommand_returnPressed()
