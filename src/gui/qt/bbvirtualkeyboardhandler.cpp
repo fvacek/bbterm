@@ -19,9 +19,10 @@ BBVirtualKeyboardHandler::BBVirtualKeyboardHandler(QObject *parent) :
 	QObject(parent)
 {
 	//m_keyboardShownCount = 0;
+	virtualkeyboard_change_options(VIRTUALKEYBOARD_LAYOUT_URL, VIRTUALKEYBOARD_ENTER_DEFAULT);
 	virtualkeyboard_request_events(0);
 	navigator_request_events(0);
-	//setKeyboardVisible(true);
+	setKeyboardVisible(true);
 	m_prevEventFilter = QAbstractEventDispatcher::instance()->setEventFilter(eventFilter);
 }
 

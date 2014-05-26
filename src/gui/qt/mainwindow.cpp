@@ -19,13 +19,13 @@ MainWindow::MainWindow(core::term::SlavePtyProcess *pty_process, QWidget *parent
     ui->setupUi(this);
 	m_terminal = new core::term::Terminal(pty_process, this);
 	ui->terminalWidget->setTerminal(m_terminal);
-	#ifdef Q_OS_BLACKBERRY
+#ifdef Q_OS_BLACKBERRY
 	ui->mainLayout->addWidget(new BBVirtualKeyboardWidget(this));
 	connect(BBVirtualKeyboardHandler::instance(), SIGNAL(keyboardVisibleChanged(bool)), this, SLOT(onVkbVisibleCchanged(bool)));
-	#else
+#else
 	ui->btVKB->hide();
 	resize(800, 700);
-	#endif
+#endif
 }
 
 MainWindow::~MainWindow()
