@@ -3,7 +3,7 @@
 #include <core/term/screenbuffer.h>
 #include <core/term/slaveptyprocess.h>
 #include <core/term/terminal.h>
-#ifdef Q_OS_BLACKBERRY
+#ifdef Q_OS_QNX
 #include "bbvirtualkeyboardhandler.h"
 #endif
 
@@ -20,7 +20,7 @@ TerminalWidget::TerminalWidget(QWidget *parent)
 : QWidget(parent), m_historyLinesOffset(0), m_horizontalScrollPx(0)
 {
 	setupFont(8);
-#ifdef Q_OS_BLACKBERRY
+#ifdef Q_OS_QNX
 	// do not work, should be???
 	//grabGesture(Qt::SwipeGesture);
 #endif
@@ -28,7 +28,7 @@ TerminalWidget::TerminalWidget(QWidget *parent)
 
 void TerminalWidget::setupFont(int point_size)
 {
-#ifdef Q_OS_BLACKBERRY
+#ifdef Q_OS_QNX
 		m_font = QFont("Andale Mono");
 		connect(BBVirtualKeyboardHandler::instance(), SIGNAL(keyboardVisibleChanged(bool)), this, SLOT(updateFocus(bool)));
 #else

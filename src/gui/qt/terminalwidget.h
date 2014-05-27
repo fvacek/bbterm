@@ -15,6 +15,8 @@ class Terminal;
 }
 }
 
+class QGestureEvent;
+
 namespace gui {
 namespace qt {
 

@@ -3,7 +3,7 @@
 #include <core/term/slaveptyprocess.h>
 #include <core/term/terminal.h>
 
-#ifdef Q_OS_BLACKBERRY
+#ifdef Q_OS_QNX
 #include "bbvirtualkeyboardhandler.h"
 #include "bbvirtualkeyboardwidget.h"
 #endif
@@ -19,7 +19,7 @@ MainWindow::MainWindow(core::term::SlavePtyProcess *pty_process, QWidget *parent
     ui->setupUi(this);
 	m_terminal = new core::term::Terminal(pty_process, this);
 	ui->terminalWidget->setTerminal(m_terminal);
-#ifdef Q_OS_BLACKBERRY
+#ifdef Q_OS_QNX
 	ui->mainLayout->addWidget(new BBVirtualKeyboardWidget(this));
 	connect(BBVirtualKeyboardHandler::instance(), SIGNAL(keyboardVisibleChanged(bool)), this, SLOT(onVkbVisibleCchanged(bool)));
 #else
@@ -65,8 +65,10 @@ void MainWindow::on_btRight_clicked()
 
 void MainWindow::on_btVKB_clicked(bool checked)
 {
-#ifdef Q_OS_BLACKBERRY
+#ifdef Q_OS_QNX
 	BBVirtualKeyboardHandler::instance()->setKeyboardVisible(checked);
+#else
+	Q_UNUSED(checked);
 #endif
 }
 
